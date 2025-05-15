@@ -9,7 +9,7 @@ const accountsModule = () => import('./accounts/accounts.module').then(x => x.Ac
 const departmentsModule = () => import('../departments/departments.module').then(x => x.DepartmentsModule);
 const requestsModule = () => import('../requests/requests.module').then(x => x.RequestsModule);
 const workflowsModule = () => import('../workflows/workflows.module').then(x => x.WorkflowsModule);
-const employeesRoutes = () => import('../employees/employees.routes').then(x => x.routes);
+const employeesModule = () => import('./employees/employees.module').then(x => x.EmployeesModule);
 
 const routes: Routes = [
   {
@@ -18,7 +18,7 @@ const routes: Routes = [
     children: [
       { path: '', component: OverviewComponent },
       { path: 'accounts', loadChildren: accountsModule },
-      { path: 'employees', loadChildren: employeesRoutes },
+      { path: 'employees', loadChildren: employeesModule },
       { path: 'departments', loadChildren: departmentsModule },
       { path: 'requests', loadChildren: requestsModule },
       { path: 'workflows', loadChildren: workflowsModule }

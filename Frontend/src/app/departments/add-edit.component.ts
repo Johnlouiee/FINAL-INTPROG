@@ -1,37 +1,74 @@
 import { Component, OnInit } from '@angular/core';
-import { Router, ActivatedRoute } from '@angular/router';
-import { AccountService } from '../_services/account.service';
+import { ActivatedRoute, Router } from '@angular/router';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { DepartmentService } from './department.service';
+import { Department } from './department.model';
 
 @Component({
-  selector: 'app-department-add-edit',
+  selector: 'app-add-edit-department',
   templateUrl: './add-edit.component.html'
 })
 export class AddEditComponent implements OnInit {
-  id: string | null = null;
-  department: any = {
-    name: '',
-    description: ''
-  };
-  errorMessage = '';
+  form: FormGroup;
+  id: number | null = null;
+  isAddMode = true;
+  loading = false;
+  submitted = false;
 
   constructor(
-    private router: Router,
+    private formBuilder: FormBuilder,
     private route: ActivatedRoute,
-    private accountService: AccountService
-  ) {}
+    private router: Router,
+    private departmentService: DepartmentService
+  ) {
+    this.form = this.formBuilder.group({
+      name: ['', [Validators.required, Validators.minLength(3)]],
+      description: ['', [Validators.required, Validators.minLength(10)]]
+    });
+  }
 
-  ngOnInit() {
+  ngOnInit(): void {
     this.id = this.route.snapshot.params['id'];
-    if (this.id) {
-      // TODO: Load department data
+    this.isAddMode = !this.id;
+
+    if (!this.isAddMode) {
+      this.departmentService.getDepartment(this.id!).subscribe({
+        next: (department) => this.form.patchValue(department),
+        error: (error) => console.error('Error loading department:', error)
+      });
     }
   }
 
-  save() {
-    // TODO: Implement save logic
+  get f() {
+    return this.form.controls;
   }
 
-  cancel() {
-    this.router.navigate(['/admin/departments']);
+  save(): void {
+    this.submitted = true;
+
+    if (this.form.invalid) {
+      return;
+    }
+
+    this.loading = true;
+    const department: Department = this.form.value;
+
+    if (this.isAddMode) {
+      this.departmentService.createDepartment(department).subscribe({
+        next: () => this.router.navigate(['/departments']),
+        error: (error) => {
+          console.error('Error creating department:', error);
+          this.loading = false;
+        }
+      });
+    } else {
+      this.departmentService.updateDepartment(this.id!, department).subscribe({
+        next: () => this.router.navigate(['/departments']),
+        error: (error) => {
+          console.error('Error updating department:', error);
+          this.loading = false;
+        }
+      });
+    }
   }
-} 
+}

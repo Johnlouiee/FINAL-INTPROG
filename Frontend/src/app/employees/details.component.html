@@ -1,0 +1,38 @@
+<div class="card" *ngIf="!loading && employee">
+  <div class="card-header">Employee Details</div>
+  <div class="card-body">
+    <h5>{{ employee.user?.firstName }} {{ employee.user?.lastName }} ({{ employee.employeeId }})</h5>
+    <p><strong>Position:</strong> {{ employee.position }}</p>
+    <p><strong>Department:</strong> {{ employee.department?.name }}</p>
+    <p><strong>Hire Date:</strong> {{ employee.hireDate | date:'shortDate' }}</p>
+    <p><strong>Status:</strong> <span class="badge" [ngClass]="{'bg-success': employee.status === 'Active', 'bg-danger': employee.status != 'Active'}">{{ employee.status }}</span></p>
+
+    <hr>
+    <h6>Workflows</h6>
+    <div *ngIf="workflows.length === 0">No workflows found for this employee.</div>
+    <table *ngIf="workflows.length > 0" class="table table-striped">
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Status</th>
+          <th>Details</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let wf of workflows">
+          <td>{{ wf.type }}</td>
+          <td>{{ wf.status }}</td>
+          <td>{{ wf.details | json }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div *ngIf="loading" class="spinner-border" role="status">
+  <span class="sr-only">Loading...</span>
+</div>
+
+<div *ngIf="error" class="alert alert-danger">
+  {{ error }}
+</div> 
