@@ -33,4 +33,8 @@ export class EmployeeService {
     console.log('EmployeeService: DELETE', `${this.apiUrl}/${id}`);
     return this.http.delete<any>(`${this.apiUrl}/${id}`);
   }
+
+  getEmployeeById(id: string) {
+    return this.http.get<any>(`/api/employees/${id}`);
+  }
 } 
