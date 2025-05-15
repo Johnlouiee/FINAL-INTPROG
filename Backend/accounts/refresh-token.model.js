@@ -11,14 +11,8 @@ function model(sequelize) {
         revoked: { type: DataTypes.DATE },
         revokedByIp: { type: DataTypes.STRING },
         replacedByToken: { type: DataTypes.STRING },
-        isExpired: {
-            type: DataTypes.VIRTUAL,
-            get() { return Date.now() >= this.expires; }
-        },
-        isActive: {
-            type: DataTypes.VIRTUAL,
-            get() { return !this.revoked && !this.isExpired; }
-        }
+        isExpired: { type: DataTypes.BOOLEAN, defaultValue: false },
+        isActive: { type: DataTypes.BOOLEAN, defaultValue: true }
     };
 
     const options = {
@@ -26,5 +20,16 @@ function model(sequelize) {
         timestamps: false
     };
 
-    return sequelize.define('refreshToken', attributes, options);
+    const RefreshToken = sequelize.define('refreshToken', attributes, options);
+
+    // Add instance methods
+    RefreshToken.prototype.getIsExpired = function() {
+        return Date.now() >= this.expires;
+    };
+
+    RefreshToken.prototype.getIsActive = function() {
+        return !this.revoked && !this.getIsExpired();
+    };
+
+    return RefreshToken;
 }
