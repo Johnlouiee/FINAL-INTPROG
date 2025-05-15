@@ -23,19 +23,12 @@ export class ListComponent implements OnInit {
     this.loadDepartments();
   }
 
-  loadDepartments() {
-    this.loading = true;
-    this.departmentService.getDepartments().subscribe({
-      next: (departments: Department[]) => {
-        this.departments = departments;
-        this.loading = false;
-      },
-      error: (error: any) => {
-        console.error('Error loading departments:', error);
-        this.loading = false;
-      }
-    });
-  }
+loadDepartments() {
+  this.departmentService.getDepartments().subscribe({
+    next: (departments) => this.departments = departments,
+    error: (error) => console.error('Error loading departments:', error)
+  });
+}
 
   account() {
     return this.accountService.accountValue;
