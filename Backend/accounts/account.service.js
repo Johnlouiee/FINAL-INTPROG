@@ -26,9 +26,9 @@ module.exports = {
 };
 
 async function authenticate({ email, password, ipAddress }) {
-  const account = await db.Account.scope('withHash').findOne({ where: { email } });
+  const account = await db.Account.scope('withPassword').findOne({ where: { email } });
 
-  if (!account || !account.isVerified || !(await bcrypt.compare(password, account.passwordHash))) {
+  if (!account || !account.isVerified || password !== account.password) {
     throw 'Email or password is incorrect';
   }
 
@@ -101,7 +101,7 @@ async function register(params, origin) {
   const isFirstAccount = (await db.Account.count()) === 0;
   account.role = isFirstAccount ? Role.Admin : Role.User;
   account.verificationToken = randomTokenString();
-  account.passwordHash = await hash(params.password);
+  account.password = params.password;
 
   await account.save();
   await sendVerificationEmail(account, origin);
@@ -137,7 +137,7 @@ async function validateResetToken({ token }) {
 
 async function resetPassword({ token, password }) {
   const account = await validateResetToken({ token });
-  account.passwordHash = await hash(password);
+  account.password = password;
   account.passwordReset = Date.now();
   account.resetToken = null;
   await account.save();
@@ -176,22 +176,17 @@ async function getAccount(id) {
   return account;
 }
 async function create(params) {
-  // Check if the email is already registered
   if (await db.Account.findOne({ where: { email: params.email } })) {
     throw `Email "${params.email}" is already registered`;
   }
 
-  // Create a new account
   const account = new db.Account({
     ...params,
-    verified: Date.now(), // Automatically verify the email
-    isActive: true // Ensure the account is active by default
+    verified: Date.now(),
+    isActive: true
   });
 
-  // Hash the password
-  account.passwordHash = await hash(params.password);
-
-  // Save the account to the database
+  account.password = params.password;
   await account.save();
 
   return basicDetails(account);
@@ -203,7 +198,7 @@ async function update(id, params) {
     throw 'Email "' + params.email + '" is already taken';
   }
   if (params.password) {
-    params.passwordHash = await hash(params.password);
+    account.password = params.password;
   }
   Object.assign(account, params);
   account.updated = Date.now();
