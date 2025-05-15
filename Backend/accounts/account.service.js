@@ -26,22 +26,39 @@ module.exports = {
 };
 
 async function authenticate({ email, password, ipAddress }) {
-  const account = await db.Account.scope('withPassword').findOne({ where: { email } });
+  try {
+    const account = await db.Account.scope('withPassword').findOne({ where: { email } });
 
-  if (!account || !account.isVerified || password !== account.password) {
-    throw 'Email or password is incorrect';
+    if (!account) {
+      throw 'Email not found';
+    }
+
+    if (!account.isVerified) {
+      throw 'Email not verified';
+    }
+
+    if (!account.isActive) {
+      throw 'Account is deactivated';
+    }
+
+    if (password !== account.password) {
+      throw 'Password is incorrect';
+    }
+
+    const jwtToken = generateJwtToken(account);
+    const refreshToken = generateRefreshToken(account, ipAddress);
+
+    await refreshToken.save();
+
+    return {
+      ...basicDetails(account),
+      jwtToken,
+      refreshToken: refreshToken.token
+    };
+  } catch (error) {
+    console.error('Authentication error:', error);
+    throw error;
   }
-
-  const jwtToken = generateJwtToken(account);
-  const refreshToken = generateRefreshToken(account, ipAddress);
-
-  await refreshToken.save();
-
-  return {
-    ...basicDetails(account),
-    jwtToken,
-    refreshToken: refreshToken.token
-  };
 }
 
 async function refreshToken({ token, ipAddress }) {
@@ -112,6 +129,7 @@ async function verifyEmail({ token }) {
   if (!account) throw 'Verification failed, token is invalid or expired';
   account.verified = Date.now();
   account.verificationToken = null;
+  account.isVerified = true;
   await account.save();
 }
 
