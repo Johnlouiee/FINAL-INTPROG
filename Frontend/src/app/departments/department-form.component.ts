@@ -46,7 +46,9 @@ export class DepartmentFormComponent implements OnInit {
     }
   }
 
-  get f() { return this.form.controls; }
+get f() {
+  return this.form.controls;
+}
 
   onSubmit() {
     this.submitted = true;
