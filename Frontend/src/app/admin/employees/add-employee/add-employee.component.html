@@ -1,0 +1,86 @@
+<div class="container mt-4">
+    <div class="card">
+        <h4 class="card-header">Add Employee</h4>
+        <div class="card-body">
+            <form [formGroup]="form" (ngSubmit)="onSubmit()">
+                <div class="mb-3">
+                    <label class="form-label">Employee ID</label>
+                    <input type="text" formControlName="employeeId" class="form-control" 
+                           [ngClass]="{ 'is-invalid': submitted && f['employeeId'].errors }"
+                           placeholder="Leave blank for auto-generated ID" />
+                    <div *ngIf="submitted && f['employeeId'].errors" class="invalid-feedback">
+                        <div *ngIf="f['employeeId'].errors['pattern']">Employee ID must contain only letters and numbers</div>
+                    </div>
+                    <small class="form-text text-muted">Leave blank to auto-generate an ID in the format EM1, EM2, etc.</small>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Account</label>
+                    <select formControlName="accountId" class="form-control" 
+                            [ngClass]="{ 'is-invalid': submitted && f['accountId'].errors }">
+                        <option value="">Select Account</option>
+                        <option *ngFor="let account of accounts" [value]="account.id">
+                            {{account.firstName}} {{account.lastName}} ({{account.role}})
+                        </option>
+                    </select>
+                    <div *ngIf="submitted && f['accountId'].errors" class="invalid-feedback">
+                        <div *ngIf="f['accountId'].errors['required']">Account is required</div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Position</label>
+                    <input type="text" formControlName="position" class="form-control" 
+                           [ngClass]="{ 'is-invalid': submitted && f['position'].errors }"
+                           placeholder="Enter Position" />
+                    <div *ngIf="submitted && f['position'].errors" class="invalid-feedback">
+                        <div *ngIf="f['position'].errors['required']">Position is required</div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Department</label>
+                    <select formControlName="departmentId" class="form-control" 
+                            [ngClass]="{ 'is-invalid': submitted && f['departmentId'].errors }">
+                        <option value="">Select Department</option>
+                        <option *ngFor="let department of departments" [value]="department.id">
+                            {{department.name}}
+                        </option>
+                    </select>
+                    <div *ngIf="submitted && f['departmentId'].errors" class="invalid-feedback">
+                        <div *ngIf="f['departmentId'].errors['required']">Department is required</div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Hire Date</label>
+                    <input type="date" formControlName="hireDate" class="form-control" 
+                           [ngClass]="{ 'is-invalid': submitted && f['hireDate'].errors }" />
+                    <div *ngIf="submitted && f['hireDate'].errors" class="invalid-feedback">
+                        <div *ngIf="f['hireDate'].errors['required']">Hire Date is required</div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Status</label>
+                    <select formControlName="status" class="form-control" 
+                            [ngClass]="{ 'is-invalid': submitted && f['status'].errors }">
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                    </select>
+                    <div *ngIf="submitted && f['status'].errors" class="invalid-feedback">
+                        <div *ngIf="f['status'].errors['required']">Status is required</div>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button [disabled]="loading" class="btn btn-primary">
+                        <span *ngIf="loading" class="spinner-border spinner-border-sm me-1"></span>
+                        Add Employee
+                    </button>
+                    <button type="button" (click)="cancel()" class="btn btn-link">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div> 
