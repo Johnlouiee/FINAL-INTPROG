@@ -1,0 +1,66 @@
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Employees</h1>
+        <button (click)="addEmployee()" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Add Employee
+        </button>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Employee ID</th>
+                            <th>Name</th>
+                            <th>Position</th>
+                            <th>Department</th>
+                            <th>Hire Date</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngIf="loading">
+                            <td colspan="7" class="text-center">
+                                <span class="spinner-border spinner-border-sm"></span> Loading...
+                            </td>
+                        </tr>
+                        <tr *ngIf="!loading && employees.length === 0">
+                            <td colspan="7" class="text-center">No employees found</td>
+                        </tr>
+                        <tr *ngFor="let employee of employees">
+                            <td>{{employee.employeeId}}</td>
+                            <td>{{employee.account?.firstName}} {{employee.account?.lastName}}</td>
+                            <td>{{employee.position}}</td>
+                            <td>{{employee.department?.name}}</td>
+                            <td>{{employee.hireDate | date}}</td>
+                            <td>
+                                <span class="badge" [ngClass]="employee.status === 'active' ? 'bg-success' : 'bg-danger'">
+                                    {{employee.status}}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <button type="button" class="btn btn-info btn-sm" (click)="viewRequests(employee)">
+                                        <i class="fas fa-list"></i> Requests
+                                    </button>
+                                    <button type="button" class="btn btn-primary btn-sm" (click)="viewWorkflows(employee)">
+                                        <i class="fas fa-tasks"></i> Workflows
+                                    </button>
+                                    <button type="button" class="btn btn-warning btn-sm" (click)="transferEmployee(employee)">
+                                        <i class="fas fa-exchange-alt"></i> Transfer
+                                    </button>
+                                    <button type="button" class="btn btn-secondary btn-sm" (click)="editEmployee(employee)">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div> 

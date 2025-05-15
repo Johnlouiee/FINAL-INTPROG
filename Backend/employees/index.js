@@ -4,6 +4,7 @@ const db = require('../_helpers/db');
 const authorize = require('../_middleware/authorize');
 const Role = require('../_helpers/role');
 
+router.get('/next-id', authorize(), getNextEmployeeId);
 router.post('/', authorize(Role.Admin), create);
 router.get('/', authorize(), getAll);
 router.get('/:id', authorize(), getById);
@@ -11,11 +12,35 @@ router.put('/:id', authorize(Role.Admin), update);
 router.delete('/:id', authorize(Role.Admin), _delete);
 router.post('/:id/transfer', authorize(Role.Admin), transfer);
 
+async function getNextEmployeeId(req, res, next) {
+    try {
+        const latestEmployee = await db.Employee.findOne({
+            order: [['id', 'DESC']]
+        });
+        const nextId = latestEmployee ? latestEmployee.id + 1 : 1;
+        res.json({ employeeId: `EM${nextId}` });
+    } catch (err) { next(err); }
+}
+
 async function create(req, res, next) {
     try {
-        const employee = await db.Employee.create(req.body);
+        // Get the latest employee to determine the next ID
+        const latestEmployee = await db.Employee.findOne({
+            order: [['id', 'DESC']]
+        });
+
+        // Generate the next employee ID
+        const nextId = latestEmployee ? latestEmployee.id + 1 : 1;
+        const defaultEmployeeId = `EM${nextId}`;
+
+        // Create the employee with the provided ID or default ID
+        const employee = await db.Employee.create({
+            ...req.body,
+            employeeId: req.body.employeeId || defaultEmployeeId
+        });
+
         res.status(201).json(employee);
-    } catch (err) {next(err); }
+    } catch (err) { next(err); }
 }
 
 async function getAll(req, res, next) {
