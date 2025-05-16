@@ -1,5 +1,5 @@
 services:
-  - type: static
+  - type: web
     name: final-intprog-frontend
     env: node
     buildCommand: |
@@ -12,6 +12,9 @@ services:
       npm install -g @angular/cli@17.3.10
       export PATH=$PATH:$(npm config get prefix)/bin
       ng build --configuration production --base-href=/
+      cd ..
+      npm install express
+    startCommand: node server.js
     envVars:
       - key: NODE_VERSION
         value: 18.x
@@ -21,7 +24,7 @@ services:
         value: https://your-backend-url.onrender.com:10000
       - key: ENVIRONMENT
         value: production
-    staticPublishPath: Frontend/dist/final-intprog
+    staticPublishPath: dist/final-intprog
     routes:
       - type: rewrite
         source: /accounts/*
