@@ -3,8 +3,14 @@ services:
     name: department-management-frontend
     env: node
     buildCommand: |
+      #!/bin/bash
+      set -e
+      npm cache clean --force
+      rm -rf node_modules package-lock.json
       npm install
-      npm run build
+      npm install -g @angular/cli@17.3.10
+      export PATH=$PATH:$(npm config get prefix)/bin
+      ./node_modules/.bin/ng build --configuration production
     envVars:
       - key: NODE_VERSION
         value: 18.x
