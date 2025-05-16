@@ -30,8 +30,8 @@ services:
     env: node
     region: oregon
     plan: free
-    buildCommand: cd Frontend && npm install && npm install -g @angular/cli && ng build --configuration production
-    startCommand: cd Frontend && ng serve --configuration production --host 0.0.0.0 --port $PORT
+    buildCommand: cd Frontend && npm install && npm run build
+    startCommand: cd Frontend && npm run start:prod
     publishDir: Frontend/dist
     envVars:
       - key: NODE_ENV
