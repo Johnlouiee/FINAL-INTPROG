@@ -5,12 +5,11 @@ services:
     buildCommand: |
       #!/bin/bash
       set -e
-      npm cache clean --force
-      rm -rf node_modules package-lock.json
+      cd Frontend
       npm install
       npm install -g @angular/cli@17.3.10
       export PATH=$PATH:$(npm config get prefix)/bin
-      ./node_modules/.bin/ng build --configuration production
+      ng build --configuration production
     envVars:
       - key: NODE_VERSION
         value: 18.x
@@ -20,4 +19,4 @@ services:
         value: https://your-backend-url.onrender.com:10000
       - key: ENVIRONMENT
         value: production
-    staticPublishPath: dist/user-management-system 
+    staticPublishPath: Frontend/dist/user-management-system 
