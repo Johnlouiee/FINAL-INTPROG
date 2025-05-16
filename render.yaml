@@ -3,11 +3,7 @@ services:
     name: final-intprog-frontend
     env: node
     buildCommand: |
-      #!/bin/bash
-      set -e
       cd Frontend
-      rm -rf node_modules package-lock.json
-      npm cache clean --force
       npm install
       npm install -g @angular/cli@17.3.10
       export PATH=$PATH:$(npm config get prefix)/bin
@@ -21,14 +17,10 @@ services:
       - key: NODE_OPTIONS
         value: --max_old_space_size=4096
       - key: API_URL
-        value: https://your-backend-url.onrender.com:10000
+        value: https://final-intprog-backend.onrender.com
       - key: ENVIRONMENT
         value: production
-    staticPublishPath: dist/final-intprog
     routes:
-      - type: rewrite
-        source: /accounts/*
-        destination: /index.html
       - type: rewrite
         source: /*
         destination: /index.html 
