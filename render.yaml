@@ -1,6 +1,6 @@
 services:
   - type: static
-    name: department-management-frontend
+    name: final-intprog-frontend
     env: node
     buildCommand: |
       #!/bin/bash
@@ -17,7 +17,7 @@ services:
         value: https://your-backend-url.onrender.com:10000
       - key: ENVIRONMENT
         value: production
-    staticPublishPath: Frontend/dist/user-management-system
+    staticPublishPath: Frontend/dist/final-intprog
     routes:
       - type: rewrite
         source: /accounts/*
