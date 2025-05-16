@@ -3,8 +3,11 @@ services:
     name: department-management-frontend
     env: node
     buildCommand: |
-      chmod +x build.sh
-      ./build.sh
+      npm install
+      npm install -g @angular/cli@17.3.10
+      export PATH=$PATH:$(npm config get prefix)/bin
+      export NODE_OPTIONS=--max_old_space_size=4096
+      ng build --configuration production --no-progress
     startCommand: ng serve --host 0.0.0.0 --port $PORT
     envVars:
       - key: NODE_ENV
