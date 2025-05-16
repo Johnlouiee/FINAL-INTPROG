@@ -39,6 +39,7 @@ export class ListComponent implements OnInit, OnDestroy {
     this.loadDepartments();
   }
 
+<<<<<<< HEAD
   ngOnDestroy() {
     if (this.routerSubscription) {
       this.routerSubscription.unsubscribe();
@@ -93,6 +94,14 @@ export class ListComponent implements OnInit, OnDestroy {
       }
     });
   }
+=======
+loadDepartments() {
+  this.departmentService.getDepartments().subscribe({
+    next: (departments) => this.departments = departments,
+    error: (error) => console.error('Error loading departments:', error)
+  });
+}
+>>>>>>> 8849299aa24c52bb400af6d1b0bd3b5294c62c67
 
   retry() {
     this.retryCount = 0;

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <div class="card">
   <div class="card-header">{{id ? 'Edit' : 'Add'}} Department</div>
   <div class="card-body">
@@ -19,5 +20,29 @@
         <button type="button" class="btn btn-secondary" (click)="cancel()" [disabled]="loading">Cancel</button>
       </div>
     </form>
+=======
+<h2 *ngIf="isAddMode">Add Department</h2>
+<h2 *ngIf="!isAddMode">Edit Department</h2>
+
+<form [formGroup]="form" (ngSubmit)="save()">
+  <div>
+    <label>Name:</label>
+    <input formControlName="name" />
+    <div *ngIf="submitted && f['name'].errors">
+  <small *ngIf="f['name'].errors?.required">Name is required.</small>
+</div> 
+>>>>>>> 8849299aa24c52bb400af6d1b0bd3b5294c62c67
   </div>
-</div>
+
+  <div>
+    <label>Description:</label>
+    <textarea formControlName="description"></textarea>
+    <div *ngIf="submitted && form.controls['description'].errors">
+      <small *ngIf="form.controls['description'].errors.required">Description is required.</small>
+      <small *ngIf="form.controls['description'].errors.minlength">Minimum 10 characters.</small>
+    </div>
+
+  </div>
+
+  <button type="submit" [disabled]="loading">{{ isAddMode ? 'Create' : 'Update' }}</button>
+</form>

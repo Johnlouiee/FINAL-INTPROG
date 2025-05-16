@@ -4,6 +4,7 @@ import { AccountService } from '../_services/account.service';
 import { RequestService } from '../_services/request.service';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { EmployeeService } from '../employees/employee.service';
 
 @Component({
   selector: 'app-request-add-edit',
@@ -22,16 +23,26 @@ export class AddEditComponent implements OnInit {
     employeeId: '',
     requestItems: []
   };
+  employees: any[] = [];
 
   constructor(
     private router: Router,
     private route: ActivatedRoute,
     private requestService: RequestService,
-    private accountService: AccountService
+    private accountService: AccountService,
+    private employeeService: EmployeeService
   ) {}
 
   ngOnInit() {
     this.id = this.route.snapshot.params['id'];
+    this.employeeService.getEmployees().subscribe({
+      next: (employees) => {
+        this.employees = employees;
+      },
+      error: (err) => {
+        console.error('Failed to load employees', err);
+      }
+    });
     this.request.employeeId = this.accountService.accountValue?.id;
     
     if (this.id) {
