@@ -3,6 +3,7 @@ services:
     name: department-management-frontend
     env: node
     buildCommand: |
+      export TERM=dumb
       export FORCE_COLOR=0
       rm -rf node_modules package-lock.json
       npm install --no-color --no-package-lock
@@ -14,4 +15,6 @@ services:
         value: --max_old_space_size=4096
       - key: FORCE_COLOR
         value: "0"
+      - key: TERM
+        value: "dumb"
     staticPublishPath: ./dist/user-management-system 
