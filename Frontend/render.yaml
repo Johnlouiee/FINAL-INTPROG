@@ -3,12 +3,8 @@ services:
     name: department-management-frontend
     env: node
     buildCommand: |
-      export TERM=xterm
-      npm install
-      npm install -g @angular/cli@17.3.10
-      export PATH=$PATH:$(npm config get prefix)/bin
-      export NODE_OPTIONS=--max_old_space_size=4096
-      ng build --configuration production
+      chmod +x build.sh
+      ./build.sh
     startCommand: ng serve --host 0.0.0.0 --port $PORT
     envVars:
       - key: NODE_ENV
@@ -19,6 +15,4 @@ services:
         value: $PATH:$(npm config get prefix)/bin
       - key: NODE_OPTIONS
         value: --max_old_space_size=4096
-      - key: TERM
-        value: xterm
     staticPublishPath: ./dist/user-management-system 
