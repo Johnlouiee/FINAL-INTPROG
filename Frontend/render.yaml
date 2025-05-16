@@ -3,18 +3,16 @@ services:
     name: department-management-frontend
     env: node
     buildCommand: |
-      export TERM=dumb
-      export FORCE_COLOR=0
+      #!/bin/bash
+      set -e
+      unset TERM
+      npm cache clean --force
       rm -rf node_modules package-lock.json
-      npm install --no-color --no-package-lock
-      npm run build --no-color
+      npm install --no-color --no-package-lock --no-audit --no-fund
+      npm run build
     envVars:
       - key: NODE_VERSION
         value: 18.x
       - key: NODE_OPTIONS
         value: --max_old_space_size=4096
-      - key: FORCE_COLOR
-        value: "0"
-      - key: TERM
-        value: "dumb"
     staticPublishPath: ./dist/user-management-system 
