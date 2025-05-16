@@ -1,14 +1,17 @@
 require('dotenv').config();
 const mysql = require('mysql2/promise');
 const { Sequelize } = require('sequelize');
-const config = require('../config.json');
 
 module.exports = db = {};
 
 initialize();
 
 async function initialize() {
-    const { host, port, user, password, database } = config.database;
+    const host = process.env.DB_HOST || 'localhost';
+    const port = process.env.DB_PORT || 3306;
+    const user = process.env.DB_USER || 'root';
+    const password = process.env.DB_PASSWORD || '';
+    const database = process.env.DB_NAME || 'department_management';
 
     try {
         // Create DB if it doesn't exist
@@ -20,7 +23,13 @@ async function initialize() {
             host,
             port,
             dialect: 'mysql',
-            logging: false
+            logging: false,
+            pool: {
+                max: 5,
+                min: 0,
+                acquire: 30000,
+                idle: 10000
+            }
         });
 
         // Initialize models
@@ -42,5 +51,6 @@ async function initialize() {
         console.log('Database connected successfully');
     } catch (error) {
         console.error('Database connection failed:', error.message);
+        process.exit(1); // Exit if database connection fails
     }
 }
