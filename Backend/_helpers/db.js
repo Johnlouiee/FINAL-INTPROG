@@ -1,21 +1,33 @@
 require('dotenv').config();
 const mysql = require('mysql2/promise');
 const { Sequelize } = require('sequelize');
+const config = require('../config.json');
 
 module.exports = db = {};
 
 initialize();
 
 async function initialize() {
-    const host = process.env.DB_HOST || 'localhost';
-    const port = process.env.DB_PORT || 3306;
-    const user = process.env.DB_USER || 'root';
-    const password = process.env.DB_PASSWORD || '';
-    const database = process.env.DB_NAME || 'department_management';
+    const host = process.env.DB_HOST || config.database.host;
+    const port = process.env.DB_PORT || config.database.port;
+    const user = process.env.DB_USER || config.database.user;
+    const password = process.env.DB_PASSWORD || config.database.password;
+    const database = process.env.DB_NAME || config.database.database;
+
+    const connectionConfig = {
+        host,
+        port,
+        user,
+        password,
+        ssl: {
+            rejectUnauthorized: false,
+            minVersion: 'TLSv1.2'
+        }
+    };
 
     try {
         // Create DB if it doesn't exist
-        const connection = await mysql.createConnection({ host, port, user, password });
+        const connection = await mysql.createConnection(connectionConfig);
         await connection.query(`CREATE DATABASE IF NOT EXISTS \`${database}\``);
 
         // Connect to DB
@@ -29,7 +41,16 @@ async function initialize() {
                 min: 0,
                 acquire: 30000,
                 idle: 10000
-            }
+            },
+            dialectOptions: {
+                ssl: {
+                    rejectUnauthorized: false,
+                    minVersion: 'TLSv1.2'
+                }
+            },
+            // Add these options to handle the deprecation warning
+            ssl: true,
+            dialectModule: mysql
         });
 
         // Initialize models
