@@ -21,9 +21,7 @@ async function initialize() {
             port,
             user,
             password,
-            ssl: {
-                rejectUnauthorized: false
-            }
+            ssl: false // Disable SSL for initial connection
         });
 
         await connection.query(`CREATE DATABASE IF NOT EXISTS \`${database}\``);
@@ -37,9 +35,7 @@ async function initialize() {
             logging: false,
             dialectModule: mysql,
             dialectOptions: {
-                ssl: {
-                    rejectUnauthorized: false
-                }
+                ssl: false // Disable SSL for Sequelize connection
             },
             pool: {
                 max: 5,
