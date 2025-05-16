@@ -22,4 +22,4 @@ import { EditModalComponent } from './edit-modal/edit-modal.component';
         ListComponent
     ]
 })
-export class EmployeesModule { } 
+export class EmployeesModule { }

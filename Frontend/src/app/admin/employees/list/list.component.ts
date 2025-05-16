@@ -82,4 +82,4 @@ export class ListComponent implements OnInit {
     addEmployee() {
         this.router.navigate(['/admin/employees/add']);
     }
-} 
+}

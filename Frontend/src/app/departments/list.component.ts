@@ -85,8 +85,8 @@ export class ListComponent implements OnInit, OnDestroy {
         if (this.retryCount < this.maxRetries) {
           console.log(`Retrying... Attempt ${this.retryCount} of ${this.maxRetries}`);
           setTimeout(() => this.loadDepartments(), 1000 * this.retryCount);
-        } else {
-          this.errorMessage = error.message || 'Error loading departments. Please try again.';
+          } else {
+            this.errorMessage = error.message || 'Error loading departments. Please try again.';
           this.loading = false;
           this.departments = [];
         }

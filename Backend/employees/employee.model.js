@@ -8,11 +8,13 @@ module.exports = (sequelize, DataTypes) => {
     employeeId: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true
+      unique: true,
+      index: true
     },
     userId: {
       type: DataTypes.INTEGER,
-      allowNull: false
+      allowNull: false,
+      index: true
     },
     position: {
       type: DataTypes.STRING,
@@ -20,7 +22,8 @@ module.exports = (sequelize, DataTypes) => {
     },
     departmentId: {
       type: DataTypes.INTEGER,
-      allowNull: false
+      allowNull: false,
+      index: true
     },
     hireDate: {
       type: DataTypes.DATEONLY,
@@ -30,6 +33,19 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       defaultValue: 'Active'
     }
+  }, {
+    indexes: [
+      {
+        unique: true,
+        fields: ['employeeId']
+      },
+      {
+        fields: ['userId']
+      },
+      {
+        fields: ['departmentId']
+      }
+    ]
   });
 
   Employee.associate = function(models) {

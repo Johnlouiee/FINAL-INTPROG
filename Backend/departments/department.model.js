@@ -9,6 +9,14 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: true
     }
+  }, {
+    timestamps: true, // Enable timestamps
+    indexes: [
+      {
+        unique: true,
+        fields: ['name']
+      }
+    ]
   });
 
   Department.associate = function(models) {

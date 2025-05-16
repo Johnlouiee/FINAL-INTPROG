@@ -64,13 +64,13 @@ export class DepartmentService {
 
                     const mappedDepartments = departmentsData.map(dept => {
                         console.log('Processing department:', dept);
-                        return {
-                            id: dept.id,
-                            name: dept.name,
-                            description: dept.description || null,
-                            createdAt: dept.createdAt ? new Date(dept.createdAt) : new Date(),
-                            updatedAt: dept.updatedAt ? new Date(dept.updatedAt) : new Date()
-                        };
+                            return {
+                                id: dept.id,
+                                name: dept.name,
+                                description: dept.description || null,
+                                createdAt: dept.createdAt ? new Date(dept.createdAt) : new Date(),
+                                updatedAt: dept.updatedAt ? new Date(dept.updatedAt) : new Date()
+                            };
                     });
 
                     console.log('Mapped departments:', mappedDepartments);
@@ -108,9 +108,7 @@ export class DepartmentService {
     createDepartment(department: Partial<Department>): Observable<Department> {
         const departmentData = {
             name: department.name,
-            description: department.description || null,
-            createdAt: new Date(),
-            updatedAt: new Date()
+            description: department.description || null
         };
 
         console.log('Creating department at:', this.apiUrl);
@@ -120,13 +118,12 @@ export class DepartmentService {
             .pipe(
                 map(response => {
                     console.log('Create department response:', response);
-                    const dept = response.data || response;
                     return {
-                        id: dept.id,
-                        name: dept.name,
-                        description: dept.description,
-                        createdAt: new Date(dept.createdAt),
-                        updatedAt: new Date(dept.updatedAt)
+                        id: response.id,
+                        name: response.name,
+                        description: response.description,
+                        createdAt: new Date(response.createdAt),
+                        updatedAt: new Date(response.updatedAt)
                     };
                 }),
                 tap(newDepartment => console.log('Created department:', newDepartment)),
@@ -137,22 +134,18 @@ export class DepartmentService {
     updateDepartment(id: number, department: Partial<Department>): Observable<Department> {
         const departmentData = {
             name: department.name,
-            description: department.description || null,
-            updatedAt: new Date()
+            description: department.description || null
         };
 
         return this.http.put<any>(`${this.apiUrl}/${id}`, departmentData, this.httpOptions)
             .pipe(
-                map(response => {
-                    const dept = response.data || response;
-                    return {
-                        id: dept.id,
-                        name: dept.name,
-                        description: dept.description,
-                        createdAt: new Date(dept.createdAt),
-                        updatedAt: new Date(dept.updatedAt)
-                    };
-                }),
+                map(response => ({
+                    id: response.id,
+                    name: response.name,
+                    description: response.description,
+                    createdAt: new Date(response.createdAt),
+                    updatedAt: new Date(response.updatedAt)
+                })),
                 tap(updatedDepartment => console.log('Updated department:', updatedDepartment)),
                 catchError(this.handleError)
             );

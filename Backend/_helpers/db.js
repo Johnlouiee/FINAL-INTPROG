@@ -37,7 +37,7 @@ async function initialize() {
         });
 
         // Sync models
-        await sequelize.sync({ alter: true });
+        await sequelize.sync({ alter: false });
 
         console.log('Database connected successfully');
     } catch (error) {
