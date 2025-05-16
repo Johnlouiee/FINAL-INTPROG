@@ -36,7 +36,7 @@ services:
       npm install -g @angular/cli && \
       ng build --configuration production
     startCommand: cd Frontend && ng serve --configuration production --host 0.0.0.0 --port $PORT
-    publishDir: Frontend/dist/user-management-system
+    publishDir: Frontend/dist
     envVars:
       - key: NODE_ENV
         value: production
