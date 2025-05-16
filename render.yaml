@@ -30,9 +30,9 @@ services:
     env: node
     region: oregon
     plan: free
-    buildCommand: cd Frontend && rm -rf node_modules package-lock.json && npm cache clean --force && npm install && npx ng build --configuration production
-    startCommand: cd Frontend && npx ng serve --configuration production --host 0.0.0.0 --port $PORT
-    publishDir: dist
+    buildCommand: cd Frontend && rm -rf node_modules package-lock.json && npm cache clean --force && npm install && npm install -g @angular/cli && ng build --configuration production
+    startCommand: cd Frontend && ng serve --configuration production --host 0.0.0.0 --port $PORT
+    publishDir: Frontend/dist
     envVars:
       - key: NODE_ENV
         value: production
