@@ -30,7 +30,7 @@ services:
     env: node
     region: oregon
     plan: free
-    buildCommand: cd Frontend && rm -rf node_modules package-lock.json && npm install --force && npm run build
+    buildCommand: cd Frontend && rm -rf node_modules package-lock.json && npm cache clean --force && npm install && npm run build
     startCommand: cd Frontend && npm run start:prod
     publishDir: dist
     envVars:
@@ -39,4 +39,6 @@ services:
       - key: API_URL
         value: https://final-intprog-api.onrender.com
       - key: PORT
-        value: 10000 
+        value: 10000
+      - key: NODE_VERSION
+        value: 18.13.0 
