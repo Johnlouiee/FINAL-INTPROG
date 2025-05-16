@@ -49,10 +49,10 @@
                                     <button type="button" class="btn btn-primary btn-sm" (click)="viewWorkflows(employee)">
                                         <i class="fas fa-tasks"></i> Workflows
                                     </button>
-                                    <button type="button" class="btn btn-warning btn-sm" (click)="transferEmployee(employee)">
+                                    <button type="button" class="btn btn-warning btn-sm" (click)="openTransferModal(employee)">
                                         <i class="fas fa-exchange-alt"></i> Transfer
                                     </button>
-                                    <button type="button" class="btn btn-secondary btn-sm" (click)="editEmployee(employee)">
+                                    <button type="button" class="btn btn-secondary btn-sm" (click)="openEditModal(employee)">
                                         <i class="fas fa-edit"></i> Edit
                                     </button>
                                 </div>
@@ -63,4 +63,18 @@
             </div>
         </div>
     </div>
-</div> 
+</div>
+
+<app-transfer-modal
+    *ngIf="showTransferModal"
+    [employee]="selectedEmployee"
+    (close)="closeTransferModal()"
+    (transferred)="onTransferComplete()">
+</app-transfer-modal>
+
+<app-edit-modal
+    *ngIf="showEditModal"
+    [employee]="selectedEmployee"
+    (close)="closeEditModal()"
+    (updated)="onEditComplete()">
+</app-edit-modal> 

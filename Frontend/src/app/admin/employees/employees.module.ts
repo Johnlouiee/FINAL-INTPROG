@@ -5,13 +5,17 @@ import { RouterModule } from '@angular/router';
 import { EmployeesRoutingModule } from './employees-routing.module';
 import { AddEmployeeComponent } from './add-employee/add-employee.component';
 import { ListComponent } from './list/list.component';
+import { TransferModalComponent } from './transfer-modal/transfer-modal.component';
+import { EditModalComponent } from './edit-modal/edit-modal.component';
 
 @NgModule({
     imports: [
         CommonModule,
         ReactiveFormsModule,
         RouterModule,
-        EmployeesRoutingModule
+        EmployeesRoutingModule,
+        TransferModalComponent,
+        EditModalComponent
     ],
     declarations: [
         AddEmployeeComponent,

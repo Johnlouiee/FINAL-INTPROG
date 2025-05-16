@@ -68,4 +68,8 @@ export class ListComponent implements OnInit {
   account() {
     return this.accountService.accountValue;
   }
+
+  goBack() {
+    this.router.navigate(['/admin/employees']);
+  }
 } 

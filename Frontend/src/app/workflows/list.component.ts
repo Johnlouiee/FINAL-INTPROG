@@ -37,6 +37,10 @@ export class ListComponent implements OnInit {
     return this.accountService.accountValue;
   }
 
+  goBack() {
+    this.router.navigate(['/admin/employees']);
+  }
+
   approve(id: string) {
     // TODO: Implement approve logic
   }

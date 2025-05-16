@@ -1,5 +1,10 @@
 <div class="card">
-  <div class="card-header">Workflows for Employee {{employeeId}}</div>
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span>Workflows for Employee {{employeeId}}</span>
+    <button class="btn btn-secondary" (click)="goBack()">
+      <i class="fas fa-arrow-left"></i> Back to Employees
+    </button>
+  </div>
   <div class="card-body">
     <div class="table-responsive">
       <table class="table table-striped">
@@ -16,7 +21,7 @@
             <td>{{workflow.type}}</td>
             <td>{{workflow.details | json}}</td>
             <td>{{workflow.status}}</td>
-            <td *ngIf="account()?.role === 'Admin'">y
+            <td *ngIf="account()?.role === 'Admin'">
               <select class="form-select d-inline-block w-auto" [(ngModel)]="workflow.status" (change)="updateStatus(workflow)">
                 <option>Pending</option>
                 <option>Approved</option>

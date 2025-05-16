@@ -1,5 +1,10 @@
 <div class="card">
-  <div class="card-header">Requests</div>
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span>Requests</span>
+    <button class="btn btn-secondary" (click)="goBack()">
+      <i class="fas fa-arrow-left"></i> Back to Employees
+    </button>
+  </div>
   <div class="card-body">
     <div class="table-responsive">
       <table class="table table-striped">

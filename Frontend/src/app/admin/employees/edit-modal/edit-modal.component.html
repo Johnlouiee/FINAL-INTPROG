@@ -1,0 +1,66 @@
+<div class="modal fade show d-block" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Edit Employee: {{employee?.employeeId}}</h5>
+        <button type="button" class="btn-close" (click)="closeModal()"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-danger" *ngIf="error">{{error}}</div>
+
+        <!-- Read-only fields -->
+        <div class="mb-3">
+          <label class="form-label">Employee ID</label>
+          <input type="text" class="form-control" [value]="employee?.employeeId" readonly>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Position</label>
+          <input type="text" class="form-control" [value]="employee?.position" readonly>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Hire Date</label>
+          <input type="text" class="form-control" [value]="employee?.hireDate | date:'mediumDate'" readonly>
+        </div>
+
+        <!-- Editable fields -->
+        <div class="mb-3">
+          <label class="form-label">Account</label>
+          <select class="form-select" [(ngModel)]="selectedAccountId" [class.is-invalid]="error">
+            <option value="">Select Account</option>
+            <option *ngFor="let account of accounts" [value]="account.id">
+              {{account.firstName}} {{account.lastName}} ({{account.role}})
+            </option>
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Department</label>
+          <select class="form-select" [(ngModel)]="selectedDepartmentId" [class.is-invalid]="error">
+            <option value="">Select Department</option>
+            <option *ngFor="let dept of departments" [value]="dept.id">
+              {{dept.name}}
+            </option>
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Status</label>
+          <select class="form-select" [(ngModel)]="selectedStatus" [class.is-invalid]="error">
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeModal()" [disabled]="loading">Cancel</button>
+        <button class="btn btn-primary" (click)="update()" [disabled]="loading || !selectedAccountId || !selectedDepartmentId || !selectedStatus">
+          <span *ngIf="loading" class="spinner-border spinner-border-sm me-1"></span>
+          Update
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade show"></div> 
