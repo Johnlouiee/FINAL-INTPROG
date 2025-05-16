@@ -1,48 +1,34 @@
-<<<<<<< HEAD
 <div class="card">
-  <div class="card-header">{{id ? 'Edit' : 'Add'}} Department</div>
+  <div class="card-header">{{isAddMode ? 'Add' : 'Edit'}} Department</div>
   <div class="card-body">
     <div class="alert alert-danger" *ngIf="errorMessage">{{errorMessage}}</div>
-    <form (ngSubmit)="save()">
+    
+    <form [formGroup]="form" (ngSubmit)="save()">
       <div class="mb-3">
         <label class="form-label">Name</label>
-        <input type="text" class="form-control" [(ngModel)]="department.name" name="name" required>
+        <input type="text" class="form-control" formControlName="name" [ngClass]="{ 'is-invalid': submitted && f['name'].errors }" />
+        <div *ngIf="submitted && f['name'].errors" class="invalid-feedback">
+          <div *ngIf="f['name'].errors['required']">Name is required</div>
+          <div *ngIf="f['name'].errors['minlength']">Name must be at least 3 characters</div>
+        </div>
       </div>
+
       <div class="mb-3">
         <label class="form-label">Description</label>
-        <textarea class="form-control" [(ngModel)]="department.description" name="description" required rows="3"></textarea>
+        <textarea class="form-control" formControlName="description" rows="3" [ngClass]="{ 'is-invalid': submitted && f['description'].errors }"></textarea>
+        <div *ngIf="submitted && f['description'].errors" class="invalid-feedback">
+          <div *ngIf="f['description'].errors['required']">Description is required</div>
+          <div *ngIf="f['description'].errors['minlength']">Description must be at least 10 characters</div>
+        </div>
       </div>
+
       <div class="text-center">
         <button type="submit" class="btn btn-primary me-2" [disabled]="loading">
           <span *ngIf="loading" class="spinner-border spinner-border-sm me-1"></span>
-          Save
+          {{isAddMode ? 'Create' : 'Update'}}
         </button>
         <button type="button" class="btn btn-secondary" (click)="cancel()" [disabled]="loading">Cancel</button>
       </div>
     </form>
-=======
-<h2 *ngIf="isAddMode">Add Department</h2>
-<h2 *ngIf="!isAddMode">Edit Department</h2>
-
-<form [formGroup]="form" (ngSubmit)="save()">
-  <div>
-    <label>Name:</label>
-    <input formControlName="name" />
-    <div *ngIf="submitted && f['name'].errors">
-  <small *ngIf="f['name'].errors?.required">Name is required.</small>
-</div> 
->>>>>>> 8849299aa24c52bb400af6d1b0bd3b5294c62c67
   </div>
-
-  <div>
-    <label>Description:</label>
-    <textarea formControlName="description"></textarea>
-    <div *ngIf="submitted && form.controls['description'].errors">
-      <small *ngIf="form.controls['description'].errors.required">Description is required.</small>
-      <small *ngIf="form.controls['description'].errors.minlength">Minimum 10 characters.</small>
-    </div>
-
-  </div>
-
-  <button type="submit" [disabled]="loading">{{ isAddMode ? 'Create' : 'Update' }}</button>
-</form>
+</div>

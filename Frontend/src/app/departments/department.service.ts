@@ -4,18 +4,27 @@ import { Observable, throwError } from 'rxjs';
 import { catchError, tap, map } from 'rxjs/operators';
 import { Department } from './department.model';
 import { environment } from '../../environments/environment';
+import { AccountService } from '../_services/account.service';
 
 @Injectable({ providedIn: 'root' })
 export class DepartmentService {
     private apiUrl = `${environment.apiUrl}/departments`;
-    private httpOptions = {
-        headers: new HttpHeaders({
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-        })
-    };
 
-    constructor(private http: HttpClient) { }
+    constructor(
+        private http: HttpClient,
+        private accountService: AccountService
+    ) { }
+
+    private getHttpOptions() {
+        const account = this.accountService.accountValue;
+        return {
+            headers: new HttpHeaders({
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'Authorization': `Bearer ${account?.jwtToken}`
+            })
+        };
+    }
 
     private handleError(error: HttpErrorResponse) {
         console.error('Full error object:', error);
@@ -30,6 +39,8 @@ export class DepartmentService {
                 errorMessage = 'API endpoint not found. Please check the server configuration.';
             } else if (error.status === 0) {
                 errorMessage = 'Unable to connect to the server. Please check if the server is running.';
+            } else if (error.status === 401) {
+                errorMessage = 'Unauthorized. Please log in again.';
             } else if (error.error && typeof error.error === 'object') {
                 errorMessage = error.error.message || error.error.error || 'Server error occurred';
             } else if (typeof error.error === 'string') {
@@ -45,7 +56,7 @@ export class DepartmentService {
     getDepartments(): Observable<Department[]> {
         console.log('Fetching departments from:', this.apiUrl);
         
-        return this.http.get<any>(this.apiUrl, this.httpOptions).pipe(
+        return this.http.get<any>(this.apiUrl, this.getHttpOptions()).pipe(
             tap(response => {
                 console.log('Raw API response:', response);
                 console.log('Response type:', typeof response);
@@ -64,13 +75,13 @@ export class DepartmentService {
 
                     const mappedDepartments = departmentsData.map(dept => {
                         console.log('Processing department:', dept);
-                            return {
-                                id: dept.id,
-                                name: dept.name,
-                                description: dept.description || null,
-                                createdAt: dept.createdAt ? new Date(dept.createdAt) : new Date(),
-                                updatedAt: dept.updatedAt ? new Date(dept.updatedAt) : new Date()
-                            };
+                        return {
+                            id: dept.id,
+                            name: dept.name,
+                            description: dept.description || null,
+                            createdAt: dept.createdAt ? new Date(dept.createdAt) : new Date(),
+                            updatedAt: dept.updatedAt ? new Date(dept.updatedAt) : new Date()
+                        };
                     });
 
                     console.log('Mapped departments:', mappedDepartments);
@@ -91,7 +102,7 @@ export class DepartmentService {
     }
 
     getDepartment(id: number): Observable<Department> {
-        return this.http.get<any>(`${this.apiUrl}/${id}`, this.httpOptions)
+        return this.http.get<any>(`${this.apiUrl}/${id}`, this.getHttpOptions())
             .pipe(
                 map(dept => ({
                     id: dept.id,
@@ -114,7 +125,7 @@ export class DepartmentService {
         console.log('Creating department at:', this.apiUrl);
         console.log('Department data:', departmentData);
         
-        return this.http.post<any>(this.apiUrl, departmentData, this.httpOptions)
+        return this.http.post<any>(this.apiUrl, departmentData, this.getHttpOptions())
             .pipe(
                 map(response => {
                     console.log('Create department response:', response);
@@ -137,7 +148,7 @@ export class DepartmentService {
             description: department.description || null
         };
 
-        return this.http.put<any>(`${this.apiUrl}/${id}`, departmentData, this.httpOptions)
+        return this.http.put<any>(`${this.apiUrl}/${id}`, departmentData, this.getHttpOptions())
             .pipe(
                 map(response => ({
                     id: response.id,
@@ -152,7 +163,7 @@ export class DepartmentService {
     }
 
     deleteDepartment(id: number): Observable<void> {
-        return this.http.delete<void>(`${this.apiUrl}/${id}`, this.httpOptions)
+        return this.http.delete<void>(`${this.apiUrl}/${id}`, this.getHttpOptions())
             .pipe(
                 tap(() => console.log('Deleted department:', id)),
                 catchError(this.handleError)
