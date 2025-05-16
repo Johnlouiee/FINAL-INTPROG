@@ -6,6 +6,7 @@ services:
       npm install
       npm install -g @angular/cli@17.3.10
       export PATH=$PATH:$(npm config get prefix)/bin
+      export NODE_OPTIONS=--max_old_space_size=4096
       ng build --configuration production
     startCommand: ng serve --host 0.0.0.0 --port $PORT
     envVars:
@@ -15,4 +16,6 @@ services:
         value: 18.x
       - key: PATH
         value: $PATH:$(npm config get prefix)/bin
-    staticPublishPath: ./dist/angular-signup-verification-boilerplate 
+      - key: NODE_OPTIONS
+        value: --max_old_space_size=4096
+    staticPublishPath: ./dist/user-management-system 
