@@ -29,8 +29,6 @@ export class AddEmployeeComponent implements OnInit {
     ) { }
 
     ngOnInit() {
-        console.log('Initializing AddEmployeeComponent');
-        
         this.form = this.formBuilder.group({
             employeeId: ['', [Validators.pattern('^[A-Za-z0-9]+$')]],
             accountId: ['', Validators.required],
@@ -50,11 +48,9 @@ export class AddEmployeeComponent implements OnInit {
         this.employeeService.getNextEmployeeId()
             .subscribe({
                 next: (response) => {
-                    console.log('Next employee ID:', response.employeeId);
                     this.form.patchValue({ employeeId: response.employeeId });
                 },
                 error: (error) => {
-                    console.error('Error loading next employee ID:', error);
                     this.alertService.error('Error loading next employee ID');
                 }
             });
@@ -64,12 +60,10 @@ export class AddEmployeeComponent implements OnInit {
         this.departmentService.getAll()
             .pipe(first())
             .subscribe({
-                next: (departments: any[]) => {
-                    console.log('Loaded departments:', departments);
+                next: (departments) => {
                     this.departments = departments;
                 },
-                error: (error: any) => {
-                    console.error('Error loading departments:', error);
+                error: (error) => {
                     this.alertService.error('Error loading departments');
                 }
             });
@@ -79,44 +73,40 @@ export class AddEmployeeComponent implements OnInit {
         this.accountService.getAll()
             .pipe(first())
             .subscribe({
-                next: (accounts: any[]) => {
-                    console.log('Loaded accounts:', accounts);
+                next: (accounts) => {
                     this.accounts = accounts;
                 },
-                error: (error: any) => {
-                    console.error('Error loading accounts:', error);
+                error: (error) => {
                     this.alertService.error('Error loading accounts');
                 }
             });
     }
 
-    // convenience getter for easy access to form fields
     get f() { return this.form.controls; }
 
     onSubmit() {
         this.submitted = true;
-        console.log('Form submitted:', this.form.value);
-
-        // reset alerts on submit
         this.alertService.clear();
 
-        // stop here if form is invalid
         if (this.form.invalid) {
-            console.log('Form is invalid:', this.form.errors);
             return;
         }
 
         this.loading = true;
-        this.employeeService.create(this.form.value)
+        const employeeData = {
+            ...this.form.value,
+            userId: this.form.value.accountId
+        };
+        delete employeeData.accountId;
+
+        this.employeeService.create(employeeData)
             .pipe(first())
             .subscribe({
                 next: () => {
-                    console.log('Employee created successfully');
-                    this.alertService.success('Employee added successfully', { keepAfterRouteChange: true });
+                    this.alertService.success('Employee added successfully');
                     this.router.navigate(['../'], { relativeTo: this.route });
                 },
-                error: (error: any) => {
-                    console.error('Error creating employee:', error);
+                error: (error) => {
                     this.alertService.error(error);
                     this.loading = false;
                 }

@@ -15,35 +15,34 @@ async function create(req, res, next) {
         const department = await db.Department.create(req.body);
         res.status(201).json(department);
     } catch (err) {
+        console.error('Error creating department:', err);
         next(err);
     }
 }
 
 async function getAll(req, res, next) {
     try {
+        console.log('Fetching all departments...');
         const departments = await db.Department.findAll({
-            include: [{ model: db.Employee, attributes: ['id'] }]
+            attributes: ['id', 'name', 'description', 'createdAt', 'updatedAt']
         });
-        res.json(departments.map(d => ({
-            ...d.toJSON(),
-            employeeCount: d.Employees.length
-        })));
+        console.log('Departments found:', departments.length);
+        res.json(departments);
     } catch (err) {
+        console.error('Error fetching departments:', err);
         next(err);
     }
 }
 
 async function getById(req, res, next) {
     try {
-        const department = await db.Department.findByPk(req.params.id, {
-            include: [{ model: db.Employee, attributes: ['id'] }]
-        });
-        if (!department) throw new Error('Department not found');
-        res.json({
-            ...department.toJSON(),
-            employeeCount: department.Employees.length
-        });
+        const department = await db.Department.findByPk(req.params.id);
+        if (!department) {
+            return res.status(404).json({ message: 'Department not found' });
+        }
+        res.json(department);
     } catch (err) {
+        console.error('Error fetching department by id:', err);
         next(err);
     }
 }
@@ -51,10 +50,13 @@ async function getById(req, res, next) {
 async function update(req, res, next) {
     try {
         const department = await db.Department.findByPk(req.params.id);
-        if (!department) throw new Error('Department not found');
+        if (!department) {
+            return res.status(404).json({ message: 'Department not found' });
+        }
         await department.update(req.body);
         res.json(department);
     } catch (err) {
+        console.error('Error updating department:', err);
         next(err);
     }
 }
@@ -62,10 +64,13 @@ async function update(req, res, next) {
 async function _delete(req, res, next) {
     try {
         const department = await db.Department.findByPk(req.params.id);
-        if (!department) throw new Error('Department not found');
+        if (!department) {
+            return res.status(404).json({ message: 'Department not found' });
+        }
         await department.destroy();
         res.json({ message: 'Department deleted' });
     } catch (err) {
+        console.error('Error deleting department:', err);
         next(err);
     }
 }

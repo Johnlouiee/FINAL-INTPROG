@@ -29,11 +29,12 @@ async function initialize() {
         db.Employee = require('../employees/employee.model')(sequelize, Sequelize);
         db.Department = require('../departments/department.model')(sequelize, Sequelize);
 
-        // Define relationships
-        db.Account.hasMany(db.RefreshToken, { onDelete: 'CASCADE' });
-        db.RefreshToken.belongsTo(db.Account);
-        db.Employee.belongsTo(db.Account, { foreignKey: 'userId', as: 'user' });
-        db.Employee.belongsTo(db.Department, { foreignKey: 'departmentId', as: 'department' });
+        // Set up associations
+        Object.keys(db).forEach(modelName => {
+            if (db[modelName].associate) {
+                db[modelName].associate(db);
+            }
+        });
 
         // Sync models
         await sequelize.sync({ alter: true });

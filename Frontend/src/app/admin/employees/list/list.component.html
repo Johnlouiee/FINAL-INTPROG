@@ -32,12 +32,12 @@
                         </tr>
                         <tr *ngFor="let employee of employees">
                             <td>{{employee.employeeId}}</td>
-                            <td>{{employee.account?.firstName}} {{employee.account?.lastName}}</td>
+                            <td>{{employee.user?.firstName}} {{employee.user?.lastName}}</td>
                             <td>{{employee.position}}</td>
-                            <td>{{employee.department?.name}}</td>
+                            <td>{{employee.Department?.name}}</td>
                             <td>{{employee.hireDate | date}}</td>
                             <td>
-                                <span class="badge" [ngClass]="employee.status === 'active' ? 'bg-success' : 'bg-danger'">
+                                <span class="badge" [ngClass]="employee.status === 'Active' ? 'bg-success' : 'bg-danger'">
                                     {{employee.status}}
                                 </span>
                             </td>

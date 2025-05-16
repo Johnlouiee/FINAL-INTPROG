@@ -1,4 +1,11 @@
 {
+  "name": "department-management-backend",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "node server.js",
+    "build": "echo 'No build step required'",
+    "dev": "nodemon server.js"
+  },
   "dependencies": {
     "@angular/core": "^19.2.6",
     "@angular/forms": "^19.2.6",

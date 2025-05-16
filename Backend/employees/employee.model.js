@@ -32,5 +32,17 @@ module.exports = (sequelize, DataTypes) => {
     }
   });
 
+  Employee.associate = function(models) {
+    Employee.belongsTo(models.Department, {
+      foreignKey: 'departmentId',
+      as: 'Department'
+    });
+    
+    Employee.belongsTo(models.Account, {
+      foreignKey: 'userId',
+      as: 'user'
+    });
+  };
+
   return Employee;
 }; 

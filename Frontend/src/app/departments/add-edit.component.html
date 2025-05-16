@@ -2,17 +2,22 @@
   <div class="card-header">{{id ? 'Edit' : 'Add'}} Department</div>
   <div class="card-body">
     <div class="alert alert-danger" *ngIf="errorMessage">{{errorMessage}}</div>
-    <div class="mb-3">
-      <label class="form-label">Name</label>
-      <input type="text" class="form-control" [(ngModel)]="department.name">
-    </div>
-    <div class="mb-3">
-      <label class="form-label">Description</label>
-      <input type="text" class="form-control" [(ngModel)]="department.description">
-    </div>
-    <div class="text-center">
-      <button class="btn btn-primary me-2" (click)="save()">Save</button>
-      <button class="btn btn-secondary" (click)="cancel()">Cancel</button>
-    </div>
+    <form (ngSubmit)="save()">
+      <div class="mb-3">
+        <label class="form-label">Name</label>
+        <input type="text" class="form-control" [(ngModel)]="department.name" name="name" required>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Description</label>
+        <textarea class="form-control" [(ngModel)]="department.description" name="description" required rows="3"></textarea>
+      </div>
+      <div class="text-center">
+        <button type="submit" class="btn btn-primary me-2" [disabled]="loading">
+          <span *ngIf="loading" class="spinner-border spinner-border-sm me-1"></span>
+          Save
+        </button>
+        <button type="button" class="btn btn-secondary" (click)="cancel()" [disabled]="loading">Cancel</button>
+      </div>
+    </form>
   </div>
 </div>

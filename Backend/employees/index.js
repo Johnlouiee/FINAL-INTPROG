@@ -48,7 +48,7 @@ async function getAll(req, res, next) {
         const employees = await db.Employee.findAll({
             include: [
                 { model: db.Account, as: 'user' },
-                { model: db.Department, as: 'department' }
+                { model: db.Department, as: 'Department' }
             ]
         });
         res.json(employees);
@@ -60,7 +60,7 @@ async function getById(req, res, next) {
         const employee = await db.Employee.findByPk(req.params.id, {
             include: [
                 { model: db.Account, as: 'user' },
-                { model: db.Department, as: 'department' }
+                { model: db.Department, as: 'Department' }
             ]
         });
         if (!employee) throw new Error('Employee not found');
