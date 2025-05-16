@@ -8,46 +8,20 @@ module.exports = db = {};
 initialize();
 
 async function initialize() {
-    const host = process.env.DB_HOST || config.database.host;
-    const port = process.env.DB_PORT || config.database.port;
-    const user = process.env.DB_USER || config.database.user;
-    const password = process.env.DB_PASSWORD || config.database.password;
-    const database = process.env.DB_NAME || config.database.database;
+    const { host, port, user, password, database } = config.database;
 
     try {
         // Create DB if it doesn't exist
-        const connection = await mysql.createConnection({
-            host,
-            port,
-            user,
-            password,
-            ssl: false // Disable SSL for initial connection
-        });
-
+        const connection = await mysql.createConnection({ host, port, user, password });
         await connection.query(`CREATE DATABASE IF NOT EXISTS \`${database}\``);
-        await connection.end();
 
-        // Connect to DB with Sequelize
+        // Connect to DB
         const sequelize = new Sequelize(database, user, password, {
             host,
             port,
             dialect: 'mysql',
-            logging: false,
-            dialectModule: mysql,
-            dialectOptions: {
-                ssl: false // Disable SSL for Sequelize connection
-            },
-            pool: {
-                max: 5,
-                min: 0,
-                acquire: 30000,
-                idle: 10000
-            }
+            logging: false
         });
-
-        // Test the connection
-        await sequelize.authenticate();
-        console.log('Database connection has been established successfully.');
 
         // Initialize models
         db.Account = require('../accounts/account.model')(sequelize);
@@ -65,9 +39,8 @@ async function initialize() {
         // Sync models
         await sequelize.sync({ alter: false });
 
-        console.log('Database models synchronized successfully');
+        console.log('Database connected successfully');
     } catch (error) {
         console.error('Database connection failed:', error.message);
-        process.exit(1); // Exit if database connection fails
     }
 }
