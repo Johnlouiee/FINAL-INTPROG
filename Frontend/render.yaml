@@ -3,9 +3,8 @@ services:
     name: department-management-frontend
     env: node
     buildCommand: |
-      npm install
-      npm install -g @angular/cli@17.3.10
-      ng build --configuration production
+      npm ci
+      npm run build
     envVars:
       - key: NODE_VERSION
         value: 18.x
