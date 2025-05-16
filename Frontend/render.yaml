@@ -7,7 +7,7 @@ services:
       set -e
       cd Frontend
       npm install
-      npm run build
+      npx ng build --configuration production
     envVars:
       - key: NODE_VERSION
         value: 18.x
@@ -17,4 +17,8 @@ services:
         value: https://your-backend-url.onrender.com:10000
       - key: ENVIRONMENT
         value: production
-    staticPublishPath: Frontend/dist/user-management-system 
+    staticPublishPath: Frontend/dist/user-management-system
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html 
