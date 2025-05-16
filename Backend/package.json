@@ -1,9 +1,5 @@
 {
   "dependencies": {
-    "@angular/core": "^19.2.6",
-    "@angular/forms": "^19.2.6",
-    "@angular/platform-browser-dynamic": "^19.2.6",
-    "@angular/router": "^19.2.6",
     "ng": "^0.0.0",
     "rxj": "^0.0.0-alpha.0",
     "rxjs": "^7.8.2",
