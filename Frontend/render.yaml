@@ -11,7 +11,7 @@ services:
       npm install --no-color --no-package-lock --no-audit --no-fund
       npm install -g @angular/cli@17.3.10
       export PATH=$PATH:$(npm config get prefix)/bin
-      npm run build
+      npm run build:prod
     envVars:
       - key: NODE_VERSION
         value: 18.x
@@ -21,4 +21,4 @@ services:
         value: https://your-backend-url.onrender.com:10000
       - key: ENVIRONMENT
         value: production
-    staticPublishPath: ./dist/user-management-system 
+    staticPublishPath: dist/user-management-system 
