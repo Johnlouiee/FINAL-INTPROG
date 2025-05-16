@@ -18,7 +18,7 @@
       <select class="form-select" [(ngModel)]="request.employeeId" [class.is-invalid]="errorMessage && !request.employeeId">
         <option value="">Select Employee</option>
         <option *ngFor="let emp of employees" [value]="emp.id">
-          {{ emp.employeeId }} - {{ emp.user?.email || 'No Email' }}
+          {{ emp.firstName }} {{ emp.lastName }}
         </option>
       </select>
     </div>
@@ -26,26 +26,6 @@
     <div class="mb-3">
       <label class="form-label">Description</label>
       <textarea class="form-control" [(ngModel)]="request.description" rows="3" placeholder="Enter request description"></textarea>
-    </div>
-
-    <div class="mb-3">
-      <label class="form-label">Items</label>
-      <div *ngFor="let item of request.requestItems; let i = index" class="border p-2 mb-2">
-        <div class="row">
-          <div class="col-md-5">
-            <label class="form-label">Name</label>
-            <input type="text" class="form-control" [(ngModel)]="item.name" [class.is-invalid]="errorMessage && !item.name">
-          </div>
-          <div class="col-md-5">
-            <label class="form-label">Quantity</label>
-            <input type="number" class="form-control" [(ngModel)]="item.quantity" min="1" [class.is-invalid]="errorMessage && item.quantity < 1">
-          </div>
-          <div class="col-md-2 d-flex align-items-end">
-            <button class="btn btn-danger" (click)="removeItem(i)">Remove</button>
-          </div>
-        </div>
-      </div>
-      <button class="btn btn-secondary" (click)="addItem()">Add Item</button>
     </div>
 
     <div class="text-center">

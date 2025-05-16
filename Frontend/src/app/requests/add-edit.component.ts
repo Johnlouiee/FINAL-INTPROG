@@ -16,14 +16,12 @@ export class AddEditComponent implements OnInit {
   id?: string;
   loading = false;
   errorMessage = '';
+  employees: any[] = [];
   request: any = {
     type: '',
-    description: '',
-    status: 'Pending',
     employeeId: '',
-    requestItems: []
+    description: ''
   };
-  employees: any[] = [];
 
   constructor(
     private router: Router,
@@ -35,15 +33,17 @@ export class AddEditComponent implements OnInit {
 
   ngOnInit() {
     this.id = this.route.snapshot.params['id'];
+    
+    // Load employees
     this.employeeService.getEmployees().subscribe({
       next: (employees) => {
         this.employees = employees;
       },
       error: (err) => {
         console.error('Failed to load employees', err);
+        this.errorMessage = 'Failed to load employees';
       }
     });
-    this.request.employeeId = this.accountService.accountValue?.id;
     
     if (this.id) {
       this.loading = true;
@@ -80,8 +80,8 @@ export class AddEditComponent implements OnInit {
       this.errorMessage = 'Type is required';
       return;
     }
-    if (!this.request.description) {
-      this.errorMessage = 'Description is required';
+    if (!this.request.employeeId) {
+      this.errorMessage = 'Employee is required';
       return;
     }
     if (!this.request.requestItems || this.request.requestItems.length === 0) {
@@ -102,7 +102,6 @@ export class AddEditComponent implements OnInit {
     }
 
     this.loading = true;
-    console.log('Saving request:', this.request);
 
     if (this.id) {
       this.requestService.update(this.id, this.request)

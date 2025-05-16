@@ -95,19 +95,15 @@ export class RequestService {
     }
 
     create(request: any) {
-        console.log('Creating request at:', `${environment.apiUrl}/requests`);
-        console.log('Request data:', JSON.stringify(request, null, 2));
         const requestData = {
-            type: request.type,
-            description: request.description,
-            status: request.status,
             employeeId: request.employeeId,
-            requestItems: request.requestItems.map((item: any) => ({
-                name: item.name,
-                quantity: item.quantity
-            }))
+            type: request.type,
+            description: request.description || null,
+            status: 'Pending'
         };
-        console.log('Processed request data:', JSON.stringify(requestData, null, 2));
+
+        console.log('Creating request with data:', requestData);
+        
         return this.http.post(`${environment.apiUrl}/requests`, requestData, this.getRequestOptions())
             .pipe(
                 tap(response => console.log('Create Response:', response)),
@@ -120,14 +116,10 @@ export class RequestService {
         console.log('Updating request at:', `${environment.apiUrl}/requests/${id}`);
         console.log('Request data:', JSON.stringify(request, null, 2));
         const requestData = {
-            type: request.type,
-            description: request.description,
-            status: request.status,
             employeeId: request.employeeId,
-            requestItems: request.requestItems.map((item: any) => ({
-                name: item.name,
-                quantity: item.quantity
-            }))
+            type: request.type,
+            description: request.description || null,
+            status: request.status
         };
         console.log('Processed request data:', JSON.stringify(requestData, null, 2));
         return this.http.put(`${environment.apiUrl}/requests/${id}`, requestData, this.getRequestOptions())

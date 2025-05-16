@@ -1,0 +1,42 @@
+services:
+  # Backend API Service
+  - type: web
+    name: final-intprog-api
+    env: node
+    region: oregon
+    plan: free
+    buildCommand: cd Backend && npm install
+    startCommand: cd Backend && node server.js
+    publishDir: Backend
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_NAME
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+
+  # Frontend Service
+  - type: web
+    name: final-intprog-web
+    env: node
+    region: oregon
+    plan: free
+    buildCommand: cd Frontend && npm install && npm run build
+    startCommand: cd Frontend && npm run start:prod
+    publishDir: dist
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: API_URL
+        value: https://final-intprog-api.onrender.com
+      - key: PORT
+        value: 10000 
