@@ -14,44 +14,44 @@ async function initialize() {
     const password = process.env.DB_PASSWORD || config.database.password;
     const database = process.env.DB_NAME || config.database.database;
 
-    const connectionConfig = {
-        host,
-        port,
-        user,
-        password,
-        ssl: {
-            rejectUnauthorized: false,
-            minVersion: 'TLSv1.2'
-        }
-    };
-
     try {
         // Create DB if it doesn't exist
-        const connection = await mysql.createConnection(connectionConfig);
-        await connection.query(`CREATE DATABASE IF NOT EXISTS \`${database}\``);
+        const connection = await mysql.createConnection({
+            host,
+            port,
+            user,
+            password,
+            ssl: {
+                rejectUnauthorized: false
+            }
+        });
 
-        // Connect to DB
+        await connection.query(`CREATE DATABASE IF NOT EXISTS \`${database}\``);
+        await connection.end();
+
+        // Connect to DB with Sequelize
         const sequelize = new Sequelize(database, user, password, {
             host,
             port,
             dialect: 'mysql',
             logging: false,
+            dialectModule: mysql,
+            dialectOptions: {
+                ssl: {
+                    rejectUnauthorized: false
+                }
+            },
             pool: {
                 max: 5,
                 min: 0,
                 acquire: 30000,
                 idle: 10000
-            },
-            dialectOptions: {
-                ssl: {
-                    rejectUnauthorized: false,
-                    minVersion: 'TLSv1.2'
-                }
-            },
-            // Add these options to handle the deprecation warning
-            ssl: true,
-            dialectModule: mysql
+            }
         });
+
+        // Test the connection
+        await sequelize.authenticate();
+        console.log('Database connection has been established successfully.');
 
         // Initialize models
         db.Account = require('../accounts/account.model')(sequelize);
@@ -69,7 +69,7 @@ async function initialize() {
         // Sync models
         await sequelize.sync({ alter: false });
 
-        console.log('Database connected successfully');
+        console.log('Database models synchronized successfully');
     } catch (error) {
         console.error('Database connection failed:', error.message);
         process.exit(1); // Exit if database connection fails

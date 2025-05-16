@@ -24,4 +24,6 @@ services:
       - key: JWT_SECRET
         value: terces
       - key: CORS_ORIGINS
-        value: https://department-management-frontend.onrender.com 
+        value: https://department-management-frontend.onrender.com
+      - key: NODE_TLS_REJECT_UNAUTHORIZED
+        value: "0" 
