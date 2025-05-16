@@ -30,7 +30,7 @@ services:
     env: node
     region: oregon
     plan: free
-    buildCommand: cd Frontend && npm install && npm run build
+    buildCommand: cd Frontend && chmod +x build.sh && ./build.sh
     startCommand: cd Frontend && npm run start:prod
     publishDir: Frontend/dist
     envVars:
