@@ -9,10 +9,16 @@ services:
       npm cache clean --force
       rm -rf node_modules package-lock.json
       npm install --no-color --no-package-lock --no-audit --no-fund
-      npm run build
+      npm install -g @angular/cli@17.3.10
+      export PATH=$PATH:$(npm config get prefix)/bin
+      ng build --configuration production
     envVars:
       - key: NODE_VERSION
         value: 18.x
       - key: NODE_OPTIONS
         value: --max_old_space_size=4096
+      - key: API_URL
+        value: https://your-backend-url.onrender.com:10000
+      - key: ENVIRONMENT
+        value: production
     staticPublishPath: ./dist/user-management-system 
