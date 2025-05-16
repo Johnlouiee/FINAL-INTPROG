@@ -73,16 +73,7 @@ async function update(req, res, next) {
         const employee = await db.Employee.findByPk(req.params.id);
         if (!employee) throw new Error('Employee not found');
         await employee.update(req.body);
-        
-        // Fetch the updated employee with related data
-        const updatedEmployee = await db.Employee.findByPk(req.params.id, {
-            include: [
-                { model: db.Account, as: 'user' },
-                { model: db.Department, as: 'Department' }
-            ]
-        });
-        
-        res.json(updatedEmployee);
+        res.json(employee);
     } catch (err) { next(err); }
 }
 
