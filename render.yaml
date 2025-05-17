@@ -1,25 +1,21 @@
 services:
   - type: web
     name: final-intprog-frontend
-    env: node
+    env: static
     buildCommand: |
       cd Frontend
       npm install
-      npm install -g @angular/cli@17.3.10
-      export PATH=$PATH:$(npm config get prefix)/bin
-      ng build --configuration production --base-href=/
-      cd ..
-      npm install express
-    startCommand: node server.js
+      npm run build
+    staticPublishPath: Frontend/dist/final-intprog
     envVars:
+      - key: API_URL
+        value: https://final-intprog-k6j8.onrender.com
+      - key: ENVIRONMENT
+        value: production
       - key: NODE_VERSION
         value: 18.x
       - key: NODE_OPTIONS
         value: --max_old_space_size=4096
-      - key: API_URL
-        value: https://final-intprog-backend.onrender.com
-      - key: ENVIRONMENT
-        value: production
     routes:
       - type: rewrite
         source: /*
