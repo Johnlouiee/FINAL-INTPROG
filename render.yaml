@@ -5,11 +5,14 @@ services:
     buildCommand: |
       cd Frontend
       npm install
+      export NODE_ENV=production
       npm run build
     staticPublishPath: Frontend/dist/final-intprog
     envVars:
       - key: NODE_VERSION
         value: 18.x
+      - key: NODE_ENV
+        value: production
     headers:
       - path: /*
         name: Cache-Control
