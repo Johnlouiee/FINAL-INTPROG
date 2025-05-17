@@ -4,7 +4,8 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve --host 0.0.0.0 --port $PORT",
-    "build": "ng build --configuration production",
+    "build": "ng build --configuration production --base-href=/",
+    "build:prod": "chmod +x build.sh && ./build.sh",
     "lint": "ng lint",
     "watch": "ng build --watch --configuration development",
     "e2e": "ng e2e",
