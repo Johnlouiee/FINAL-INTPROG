@@ -1,20 +1,29 @@
 #!/bin/bash
-
-# Clean up previous builds
-rm -rf dist
-rm -rf node_modules
+set -e
 
 # Install dependencies
 npm install
 
+# Install Angular CLI globally
+npm install -g @angular/cli@17.3.10
+
+# Set environment variables
+export PATH=$PATH:$(npm config get prefix)/bin
+export NODE_OPTIONS=--max_old_space_size=4096
+
+# Clean previous build
+rm -rf dist
+
 # Build the application
-npm run build
+ng build --configuration production --base-href=/ --output-path=dist/final-intprog
 
-# Create necessary files for static hosting
-echo "/* /index.html 200" > dist/final-intprog/_redirects
-echo "/assets/* /assets/:splat 200" >> dist/final-intprog/_redirects
+# Create _redirects file for SPA routing
+cat > dist/final-intprog/_redirects << EOL
+/* /index.html 200
+/assets/* /assets/:splat 200
+EOL
 
-# Create .htaccess for Apache servers
+# Create .htaccess file for Apache
 cat > dist/final-intprog/.htaccess << EOL
 RewriteEngine On
 RewriteBase /
@@ -22,7 +31,9 @@ RewriteRule ^index\.html$ - [L]
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule . /index.html [L]
-EOL
 
-# Ensure proper permissions
-chmod -R 755 dist/final-intprog 
+# Prevent caching
+Header set Cache-Control "no-cache, no-store, must-revalidate"
+Header set Pragma "no-cache"
+Header set Expires 0
+EOL 
