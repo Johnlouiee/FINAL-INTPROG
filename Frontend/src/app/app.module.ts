@@ -11,6 +11,7 @@ import { appInitializer } from './_helpers/app.initializer';
 import { JwtInterceptor } from './_helpers/jwt.interceptor';
 import { ErrorInterceptor } from './_helpers/error.interceptor';
 import { AccountService } from './_services/account.service';
+import { ConfigService } from './_services/config.service';
 
 import { AppComponent } from './app.component';
 import { AlertComponent } from './_components';
@@ -30,10 +31,10 @@ import { HomeComponent } from './home';
     DepartmentFormComponent
   ],
   providers: [
-    { provide: APP_INITIALIZER, useFactory: appInitializer, multi: true, deps: [AccountService] },
+    { provide: APP_INITIALIZER, useFactory: appInitializer, multi: true, deps: [AccountService, ConfigService] },
     { provide: HTTP_INTERCEPTORS, useClass: JwtInterceptor, multi: true },
     { provide: HTTP_INTERCEPTORS, useClass: ErrorInterceptor, multi: true },
-
+    ConfigService,
     // provider used to create fake backend
     //fakeBackendProvider
   ],
