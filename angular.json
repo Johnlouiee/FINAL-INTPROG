@@ -6,31 +6,31 @@
     "final-intprog": {
       "projectType": "application",
       "schematics": {},
-      "root": "",
-      "sourceRoot": "src",
+      "root": "Frontend",
+      "sourceRoot": "Frontend/src",
       "prefix": "app",
       "architect": {
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
-            "outputPath": "dist/final-intprog",
-            "index": "src/index.html",
-            "main": "src/main.ts",
+            "outputPath": "Frontend/dist/final-intprog",
+            "index": "Frontend/src/index.html",
+            "main": "Frontend/src/main.ts",
             "polyfills": [
               "zone.js"
             ],
-            "tsConfig": "tsconfig.app.json",
+            "tsConfig": "Frontend/tsconfig.app.json",
             "assets": [
-              "src/favicon.ico",
-              "src/assets",
+              "Frontend/src/favicon.ico",
+              "Frontend/src/assets",
               {
                 "glob": "**/*",
-                "input": "src/assets",
+                "input": "Frontend/src/assets",
                 "output": "/assets/"
               }
             ],
             "styles": [
-              "src/styles.less",
+              "Frontend/src/styles.less",
               "node_modules/bootstrap/dist/css/bootstrap.min.css",
               "node_modules/bootstrap/dist/css/bootstrap-utilities.min.css"
             ],
@@ -100,13 +100,13 @@
               "zone.js",
               "zone.js/testing"
             ],
-            "tsConfig": "tsconfig.spec.json",
+            "tsConfig": "Frontend/tsconfig.spec.json",
             "assets": [
-              "src/favicon.ico",
-              "src/assets"
+              "Frontend/src/favicon.ico",
+              "Frontend/src/assets"
             ],
             "styles": [
-              "src/styles.less"
+              "Frontend/src/styles.less"
             ],
             "scripts": []
           }
