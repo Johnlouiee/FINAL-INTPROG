@@ -34,7 +34,13 @@
               "node_modules/bootstrap/dist/css/bootstrap.min.css",
               "node_modules/bootstrap/dist/css/bootstrap-utilities.min.css"
             ],
-            "scripts": []
+            "scripts": [],
+            "vendorChunk": true,
+            "extractLicenses": false,
+            "buildOptimizer": false,
+            "sourceMap": true,
+            "optimization": false,
+            "namedChunks": true
           },
           "configurations": {
             "production": {
