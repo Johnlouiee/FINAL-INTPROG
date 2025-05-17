@@ -12,4 +12,7 @@ export PATH=$PATH:$(npm config get prefix)/bin
 export NODE_OPTIONS=--max_old_space_size=4096
 
 # Build the application
-ng build --configuration production 
+ng build --configuration production
+
+# Create _redirects file for SPA routing
+echo "/* /index.html 200" > dist/final-intprog/_redirects 
