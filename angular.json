@@ -6,31 +6,31 @@
     "final-intprog": {
       "projectType": "application",
       "schematics": {},
-      "root": "Frontend",
-      "sourceRoot": "Frontend/src",
+      "root": "",
+      "sourceRoot": "src",
       "prefix": "app",
       "architect": {
         "build": {
-          "builder": "@angular-devkit/build-angular:application",
+          "builder": "@angular-devkit/build-angular:browser",
           "options": {
-            "outputPath": "Frontend/dist/final-intprog",
-            "index": "Frontend/src/index.html",
-            "main": "Frontend/src/main.ts",
+            "outputPath": "dist/final-intprog",
+            "index": "src/index.html",
+            "main": "src/main.ts",
             "polyfills": [
               "zone.js"
             ],
-            "tsConfig": "Frontend/tsconfig.app.json",
+            "tsConfig": "tsconfig.app.json",
             "assets": [
-              "Frontend/src/favicon.ico",
-              "Frontend/src/assets",
+              "src/favicon.ico",
+              "src/assets",
               {
                 "glob": "**/*",
-                "input": "Frontend/src/assets",
+                "input": "src/assets",
                 "output": "/assets/"
               }
             ],
             "styles": [
-              "Frontend/src/styles.less",
+              "src/styles.less",
               "node_modules/bootstrap/dist/css/bootstrap.min.css",
               "node_modules/bootstrap/dist/css/bootstrap-utilities.min.css"
             ],
@@ -94,13 +94,13 @@
               "zone.js",
               "zone.js/testing"
             ],
-            "tsConfig": "Frontend/tsconfig.spec.json",
+            "tsConfig": "tsconfig.spec.json",
             "assets": [
-              "Frontend/src/favicon.ico",
-              "Frontend/src/assets"
+              "src/favicon.ico",
+              "src/assets"
             ],
             "styles": [
-              "Frontend/src/styles.less"
+              "src/styles.less"
             ],
             "scripts": []
           }
