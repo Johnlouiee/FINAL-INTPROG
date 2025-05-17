@@ -6,8 +6,9 @@ services:
       cd Frontend
       rm -rf dist
       rm -rf node_modules
+      rm -rf .angular/cache
       npm install
-      npm run build
+      npm run build -- --configuration=production
       cd ../Backend
       npm install
     startCommand: node Backend/server.js
