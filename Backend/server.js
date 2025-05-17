@@ -48,7 +48,7 @@ app.get('/health', (req, res) => {
   res.status(200).json({ message: 'API is running', status: 'healthy' });
 });
 
-// Handle Angular routes
+// Handle Angular routes - this must be after all other routes
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../Frontend/dist/final-intprog/index.html'));
 });
@@ -58,4 +58,7 @@ app.use(errorHandler);
 
 // Start server
 const port = process.env.PORT || 10000;
-app.listen(port, () => console.log(`Server listening on port ${port}`));
+app.listen(port, () => {
+  console.log(`Server listening on port ${port}`);
+  console.log(`Frontend path: ${path.join(__dirname, '../Frontend/dist/final-intprog')}`);
+});
