@@ -1,21 +1,23 @@
 services:
   - type: web
-    name: final-intprog-frontend
-    env: static
+    name: final-intprog
+    env: node
     buildCommand: |
       cd Frontend
       rm -rf dist
       rm -rf node_modules
       npm install
       npm run build
-    staticPublishPath: Frontend/dist/final-intprog
+      cd ../Backend
+      npm install
+    startCommand: node Backend/server.js
     envVars:
-      - key: API_URL
-        value: https://final-intprog-k6j8.onrender.com
-      - key: ENVIRONMENT
+      - key: NODE_ENV
         value: production
       - key: NODE_VERSION
         value: 18.x
+      - key: PORT
+        value: 10000
     headers:
       - path: /*
         name: Cache-Control

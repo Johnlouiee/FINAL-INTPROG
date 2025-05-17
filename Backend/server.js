@@ -2,6 +2,7 @@ require('rootpath')();
 require('dotenv').config(); // Load environment variables
 
 const express = require('express');
+const path = require('path');
 const app = express();
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
@@ -16,7 +17,7 @@ app.use(cookieParser());
 // Allow CORS requests from specified origins
 const allowedOrigins = process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(',') : [
   'http://localhost:4200',
-  'https://final-intprog-frontend.onrender.com'
+  'https://final-intprog.onrender.com'
 ];
 app.use(cors({
   origin: (origin, callback) => {
@@ -28,6 +29,9 @@ app.use(cors({
   },
   credentials: true
 }));
+
+// Serve static files from the frontend build directory
+app.use(express.static(path.join(__dirname, '../Frontend/dist/final-intprog')));
 
 // API routes
 app.use('/accounts', require('./accounts/accounts.controller'));
@@ -43,13 +47,15 @@ app.use('/api-docs', require('_helpers/swagger'));
 app.get('/health', (req, res) => {
   res.status(200).json({ message: 'API is running', status: 'healthy' });
 });
-app.get('/', (req, res) => {
-    res.send('Server is running!');
+
+// Handle Angular routes
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../Frontend/dist/final-intprog/index.html'));
 });
 
 // Global error handler
 app.use(errorHandler);
 
 // Start server
-const port = process.env.PORT || 4000;
+const port = process.env.PORT || 10000;
 app.listen(port, () => console.log(`Server listening on port ${port}`));
