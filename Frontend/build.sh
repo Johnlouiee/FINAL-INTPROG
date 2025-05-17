@@ -11,11 +11,17 @@ npm install -g @angular/cli@17.3.10
 export PATH=$PATH:$(npm config get prefix)/bin
 export NODE_OPTIONS=--max_old_space_size=4096
 
+# Clean previous build
+rm -rf dist
+
 # Build the application
 ng build --configuration production --base-href=/ --output-path=dist/final-intprog
 
 # Create _redirects file for SPA routing
-echo "/* /index.html 200" > dist/final-intprog/_redirects
+cat > dist/final-intprog/_redirects << EOL
+/* /index.html 200
+/assets/* /assets/:splat 200
+EOL
 
 # Create .htaccess file for Apache
 cat > dist/final-intprog/.htaccess << EOL
@@ -25,4 +31,9 @@ RewriteRule ^index\.html$ - [L]
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule . /index.html [L]
+
+# Prevent caching
+Header set Cache-Control "no-cache, no-store, must-revalidate"
+Header set Pragma "no-cache"
+Header set Expires 0
 EOL 
