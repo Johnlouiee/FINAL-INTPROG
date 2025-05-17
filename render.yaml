@@ -5,7 +5,9 @@ services:
     buildCommand: |
       cd Frontend
       npm install
-      npm run build -- --base-href=/
+      npm install -g @angular/cli@17.3.10
+      export PATH=$PATH:$(npm config get prefix)/bin
+      ng build --configuration production --base-href=/ --output-path=dist/final-intprog
     staticPublishPath: Frontend/dist/final-intprog
     envVars:
       - key: API_URL
@@ -16,6 +18,16 @@ services:
         value: 18.x
       - key: NODE_OPTIONS
         value: --max_old_space_size=4096
+    headers:
+      - path: /*
+        name: Cache-Control
+        value: no-cache, no-store, must-revalidate
+      - path: /*
+        name: Pragma
+        value: no-cache
+      - path: /*
+        name: Expires
+        value: "0"
     routes:
       - type: rewrite
         source: /*
