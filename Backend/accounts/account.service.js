@@ -26,39 +26,25 @@ module.exports = {
 };
 
 async function authenticate({ email, password, ipAddress }) {
-  try {
-    const account = await db.Account.scope('withPassword').findOne({ where: { email } });
-
-    if (!account) {
-      throw 'Email not found';
-    }
-
-    if (!account.isVerified) {
-      throw 'Email not verified';
-    }
-
-    if (!account.isActive) {
-      throw 'Account is deactivated';
-    }
-
-    if (password !== account.password) {
-      throw 'Password is incorrect';
-    }
-
-    const jwtToken = generateJwtToken(account);
-    const refreshToken = generateRefreshToken(account, ipAddress);
-
-    await refreshToken.save();
-
-    return {
-      ...basicDetails(account),
-      jwtToken,
-      refreshToken: refreshToken.token
-    };
-  } catch (error) {
-    console.error('Authentication error:', error);
-    throw error;
+  const account = await db.Account.findOne({ where: { email } });
+  
+  if (!account || !account.isVerified || !bcrypt.compareSync(password, account.passwordHash)) {
+    throw 'Email or password is incorrect';
   }
+
+  // Authentication successful so generate jwt and refresh tokens
+  const jwtToken = generateJwtToken(account);
+  const refreshToken = generateRefreshToken(account, ipAddress);
+
+  // Save refresh token
+  await refreshToken.save();
+
+  // Return basic details and tokens
+  return {
+    ...basicDetails(account),
+    jwtToken,
+    refreshToken: refreshToken.token
+  };
 }
 
 async function refreshToken({ token, ipAddress }) {
@@ -108,20 +94,27 @@ async function sendVerificationEmail(account, origin) {
   });
 }
 
-
 async function register(params, origin) {
+  // Validate
   if (await db.Account.findOne({ where: { email: params.email } })) {
-    return await sendAlreadyRegisteredEmail(params.email, origin);
+    throw 'Email "' + params.email + '" is already registered';
   }
 
+  // Create account
   const account = new db.Account(params);
+  
+  // Hash password
+  account.passwordHash = bcrypt.hashSync(params.password, 10);
+  
+  // First registered account is an admin
   const isFirstAccount = (await db.Account.count()) === 0;
   account.role = isFirstAccount ? Role.Admin : Role.User;
   account.verificationToken = randomTokenString();
-  account.password = params.password;
-
+  
+  // Save account
   await account.save();
-  await sendVerificationEmail(account, origin);
+
+  return basicDetails(account);
 }
 
 async function verifyEmail({ token }) {
@@ -170,6 +163,7 @@ async function getById(id) {
   const account = await getAccount(id);
   return basicDetails(account);
 }
+
 async function activate(id) {
   console.log(`Activating account with ID: ${id}`); // Debugging
   const account = await getAccount(id);
@@ -193,18 +187,19 @@ async function getAccount(id) {
   if (!account) throw 'Account not found';
   return account;
 }
+
 async function create(params) {
+  // Validate
   if (await db.Account.findOne({ where: { email: params.email } })) {
-    throw `Email "${params.email}" is already registered`;
+    throw 'Email "' + params.email + '" is already registered';
   }
 
-  const account = new db.Account({
-    ...params,
-    verified: Date.now(),
-    isActive: true
-  });
-
-  account.password = params.password;
+  const account = new db.Account(params);
+  
+  // Hash password
+  account.passwordHash = bcrypt.hashSync(params.password, 10);
+  
+  // Save account
   await account.save();
 
   return basicDetails(account);
@@ -212,15 +207,21 @@ async function create(params) {
 
 async function update(id, params) {
   const account = await getAccount(id);
+
+  // Validate (if email was changed)
   if (params.email && account.email !== params.email && await db.Account.findOne({ where: { email: params.email } })) {
     throw 'Email "' + params.email + '" is already taken';
   }
+
+  // Hash password if it was entered
   if (params.password) {
-    account.password = params.password;
+    params.passwordHash = bcrypt.hashSync(params.password, 10);
   }
+
+  // Copy params to account and save
   Object.assign(account, params);
-  account.updated = Date.now();
   await account.save();
+
   return basicDetails(account);
 }
 
@@ -229,24 +230,14 @@ async function _delete(id) {
   await account.destroy();
 }
 
-async function getAccount(id) {
-  const account = await db.Account.findByPk(id);
-  if (!account) throw 'Account not found';
-  return account;
-}
-
 async function getRefreshToken(token) {
   const refreshToken = await db.RefreshToken.findOne({ where: { token } });
   if (!refreshToken || !refreshToken.isActive) throw 'Invalid token';
   return refreshToken;
 }
 
-async function hash(password) {
-  return await bcrypt.hash(password, 10);
-}
-
 function generateJwtToken(account) {
-  return jwt.sign({ sub: account.id, id: account.id }, process.env.JWT_SECRET, { expiresIn: '15m' });
+  return jwt.sign({ sub: account.id, id: account.id }, process.env.JWT_SECRET || 'your-secret-key', { expiresIn: '15m' });
 }
 
 function generateRefreshToken(account, ipAddress) {

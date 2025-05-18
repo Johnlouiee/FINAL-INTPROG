@@ -99,7 +99,8 @@ export class RequestService {
             employeeId: request.employeeId,
             type: request.type,
             description: request.description || null,
-            status: 'Pending'
+            status: 'Pending',
+            requestItems: request.requestItems || []
         };
 
         console.log('Creating request with data:', requestData);
@@ -119,7 +120,8 @@ export class RequestService {
             employeeId: request.employeeId,
             type: request.type,
             description: request.description || null,
-            status: request.status
+            status: request.status,
+            requestItems: request.requestItems || []
         };
         console.log('Processed request data:', JSON.stringify(requestData, null, 2));
         return this.http.put(`${environment.apiUrl}/requests/${id}`, requestData, this.getRequestOptions())
