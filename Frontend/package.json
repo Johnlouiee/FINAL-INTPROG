@@ -9,7 +9,8 @@
     "lint": "ng lint",
     "watch": "ng build --watch --configuration development",
     "e2e": "ng e2e",
-    "test": "ng test"
+    "test": "ng test",
+    "deploy": "npm run build && firebase deploy --only hosting"
   },
   "private": true,
   "dependencies": {
