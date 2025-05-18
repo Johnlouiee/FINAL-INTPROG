@@ -4,7 +4,6 @@
   "scripts": {
     "ng": "ng",
     "start": "npx ng serve --host 0.0.0.0 --port $PORT",
-    "build": "npx ng build --configuration production",
     "lint": "npx ng lint",
     "watch": "npx ng build --watch --configuration development",
     "e2e": "npx ng e2e",
