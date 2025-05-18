@@ -10,27 +10,51 @@ export class EmployeeService {
   constructor(private http: HttpClient) {}
 
   getEmployees(): Observable<any[]> {
-    console.log('EmployeeService: GET', this.apiUrl);
     return this.http.get<any[]>(this.apiUrl);
   }
 
   getEmployee(id: string): Observable<any> {
-    console.log('EmployeeService: GET', `${this.apiUrl}/${id}`);
     return this.http.get<any>(`${this.apiUrl}/${id}`);
   }
 
   createEmployee(employee: any): Observable<any> {
-    console.log('EmployeeService: POST', this.apiUrl, employee);
-    return this.http.post<any>(this.apiUrl, employee);
+    // Format the data before sending
+    const formattedEmployee = {
+      firstName: employee.firstName?.trim(),
+      lastName: employee.lastName?.trim(),
+      email: employee.email?.trim(),
+      phone: employee.phone?.trim(),
+      position: employee.position?.trim(),
+      departmentId: parseInt(employee.departmentId),
+      hireDate: employee.hireDate,
+      salary: parseFloat(employee.salary),
+      status: employee.status || 'Active'
+    };
+
+    // Log the formatted data
+    console.log('Formatted employee data:', formattedEmployee);
+
+    return this.http.post<any>(this.apiUrl, formattedEmployee);
   }
 
   updateEmployee(id: string, employee: any): Observable<any> {
-    console.log('EmployeeService: PUT', `${this.apiUrl}/${id}`, employee);
-    return this.http.put<any>(`${this.apiUrl}/${id}`, employee);
+    // Format the data before sending
+    const formattedEmployee = {
+      firstName: employee.firstName?.trim(),
+      lastName: employee.lastName?.trim(),
+      email: employee.email?.trim(),
+      phone: employee.phone?.trim(),
+      position: employee.position?.trim(),
+      departmentId: parseInt(employee.departmentId),
+      hireDate: employee.hireDate,
+      salary: parseFloat(employee.salary)
+    };
+
+    console.log('Updating employee data:', formattedEmployee);
+    return this.http.put<any>(`${this.apiUrl}/${id}`, formattedEmployee);
   }
 
   deleteEmployee(id: string): Observable<any> {
-    console.log('EmployeeService: DELETE', `${this.apiUrl}/${id}`);
     return this.http.delete<any>(`${this.apiUrl}/${id}`);
   }
 

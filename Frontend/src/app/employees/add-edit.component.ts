@@ -1,11 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
-import { AccountService } from '../_services/account.service';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { UserService } from '../_services/user.service';
+import { FormsModule, NgForm } from '@angular/forms';
 import { DepartmentService } from '../departments/department.service';
 import { EmployeeService } from './employee.service';
+import { AlertService } from '../_services/alert.service';
 
 @Component({
   selector: 'app-employee-add-edit',
@@ -16,13 +15,15 @@ import { EmployeeService } from './employee.service';
 export class AddEditComponent implements OnInit {
   id: string | null = null;
   employee: any = {
-    employeeId: '',
-    userId: '',
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
     position: '',
     departmentId: '',
-    hireDate: new Date().toISOString().split('T')[0]
+    hireDate: new Date().toISOString().split('T')[0],
+    salary: 0
   };
-  users: any[] = [];
   departments: any[] = [];
   errorMessage = '';
   loading = false;
@@ -30,10 +31,9 @@ export class AddEditComponent implements OnInit {
   constructor(
     private router: Router,
     private route: ActivatedRoute,
-    private accountService: AccountService,
-    private userService: UserService,
     private departmentService: DepartmentService,
-    private employeeService: EmployeeService
+    private employeeService: EmployeeService,
+    private alertService: AlertService
   ) {}
 
   ngOnInit() {
@@ -51,38 +51,91 @@ export class AddEditComponent implements OnInit {
         }
       });
     }
-    // Load users
-    this.userService.getUsers().subscribe({
-      next: (users) => { this.users = users; },
-      error: (err) => { this.errorMessage = 'Failed to load users'; }
-    });
+    
     // Load departments
     this.departmentService.getDepartments().subscribe({
-      next: (departments) => { this.departments = departments; },
-      error: (err) => { this.errorMessage = 'Failed to load departments'; }
+      next: (departments) => { 
+        this.departments = departments;
+      },
+      error: (err) => { 
+        this.errorMessage = 'Failed to load departments';
+      }
     });
   }
 
-  save() {
+  save(form: NgForm) {
+    // Stop here if form is invalid
+    if (form.invalid) {
+      this.errorMessage = 'Please fill in all required fields';
+      return;
+    }
+
     this.errorMessage = '';
     this.loading = true;
+
+    // Log the form data for debugging
+    console.log('Form data before submission:', this.employee);
+
+    // Ensure all required fields are present and properly formatted
+    const employeeData = {
+      firstName: this.employee.firstName?.trim(),
+      lastName: this.employee.lastName?.trim(),
+      email: this.employee.email?.trim(),
+      phone: this.employee.phone?.trim(),
+      position: this.employee.position?.trim(),
+      departmentId: this.employee.departmentId,
+      hireDate: this.employee.hireDate,
+      salary: parseFloat(this.employee.salary)
+    };
+
+    // Log the formatted data
+    console.log('Formatted employee data:', employeeData);
+
+    // Validate required fields
+    if (!employeeData.firstName || !employeeData.lastName || !employeeData.email || 
+        !employeeData.phone || !employeeData.position || !employeeData.departmentId || 
+        !employeeData.hireDate || !employeeData.salary) {
+      this.errorMessage = 'Please fill in all required fields';
+      this.loading = false;
+      return;
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(employeeData.email)) {
+      this.errorMessage = 'Please enter a valid email address';
+      this.loading = false;
+      return;
+    }
+
+    // Validate salary is a positive number
+    if (isNaN(employeeData.salary) || employeeData.salary <= 0) {
+      this.errorMessage = 'Please enter a valid salary amount';
+      this.loading = false;
+      return;
+    }
+
     if (this.id) {
-      this.employeeService.updateEmployee(this.id, this.employee).subscribe({
+      this.employeeService.updateEmployee(this.id, employeeData).subscribe({
         next: () => {
+          this.alertService.success('Employee updated successfully');
           this.router.navigate(['/admin/employees']);
         },
         error: (err) => {
-          this.errorMessage = 'Failed to update employee';
+          console.error('Update error:', err);
+          this.errorMessage = err.error?.message || 'Failed to update employee';
           this.loading = false;
         }
       });
     } else {
-      this.employeeService.createEmployee(this.employee).subscribe({
+      this.employeeService.createEmployee(employeeData).subscribe({
         next: () => {
+          this.alertService.success('Employee created successfully');
           this.router.navigate(['/admin/employees']);
         },
         error: (err) => {
-          this.errorMessage = 'Failed to create employee';
+          console.error('Creation error:', err);
+          this.errorMessage = err.error?.message || 'Failed to create employee';
           this.loading = false;
         }
       });

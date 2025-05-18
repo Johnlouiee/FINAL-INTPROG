@@ -1,30 +1,88 @@
-<div class="card">
-  <div class="card-header">{{id ? 'Edit' : 'Add'}} Employee</div>
-  <div class="card-body">
-    <div class="alert alert-danger" *ngIf="errorMessage">{{errorMessage}}</div>
-    <div class="mb-3">
-      <label class="form-label">Employee ID</label>
-      <input type="text" class="form-control" [(ngModel)]="employee.employeeId" [disabled]="!!id">
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h4>{{ id ? 'Edit' : 'Add' }} Employee</h4>
+                </div>
+                <div class="card-body">
+                    <form #employeeForm="ngForm" (ngSubmit)="save(employeeForm)">
+                        <div class="alert alert-danger" *ngIf="errorMessage">
+                            {{ errorMessage }}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="firstName" class="form-label">First Name</label>
+                            <input type="text" class="form-control" id="firstName" name="firstName"
+                                [(ngModel)]="employee.firstName">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="lastName" class="form-label">Last Name</label>
+                            <input type="text" class="form-control" id="lastName" name="lastName"
+                                [(ngModel)]="employee.lastName">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email"
+                                [(ngModel)]="employee.email">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="phone" class="form-label">Phone</label>
+                            <input type="tel" class="form-control" id="phone" name="phone"
+                                [(ngModel)]="employee.phone">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="position" class="form-label">Position</label>
+                            <input type="text" class="form-control" id="position" name="position"
+                                [(ngModel)]="employee.position" required #position="ngModel">
+                            <div class="text-danger" *ngIf="position.invalid && (position.dirty || position.touched)">
+                                Position is required
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="departmentId" class="form-label">Department</label>
+                            <select class="form-select" id="departmentId" name="departmentId"
+                                [(ngModel)]="employee.departmentId" required #departmentId="ngModel">
+                                <option value="">Select Department</option>
+                                <option *ngFor="let dept of departments" [value]="dept.id">
+                                    {{ dept.name }}
+                                </option>
+                            </select>
+                            <div class="text-danger" *ngIf="departmentId.invalid && (departmentId.dirty || departmentId.touched)">
+                                Department is required
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="hireDate" class="form-label">Hire Date</label>
+                            <input type="date" class="form-control" id="hireDate" name="hireDate"
+                                [(ngModel)]="employee.hireDate" required #hireDate="ngModel">
+                            <div class="text-danger" *ngIf="hireDate.invalid && (hireDate.dirty || hireDate.touched)">
+                                Hire date is required
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="salary" class="form-label">Salary</label>
+                            <input type="number" class="form-control" id="salary" name="salary"
+                                [(ngModel)]="employee.salary" min="0" step="0.01">
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <button type="button" class="btn btn-secondary" (click)="cancel()">Cancel</button>
+                            <button type="submit" class="btn btn-primary" [disabled]="loading || employeeForm.invalid">
+                                <span *ngIf="loading" class="spinner-border spinner-border-sm me-1"></span>
+                                Save
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="mb-3">
-      <label class="form-label">User</label>
-      <select class="form-select" [(ngModel)]="employee.userId">
-        <option *ngFor="let user of users" [value]="user.id">{{user.email}}</option>
-      </select>
-    </div>
-    <div class="mb-3">
-      <label class="form-label">Position</label>
-      <input type="text" class="form-control" [(ngModel)]="employee.position">
-    </div>
-    <div class="mb-3">
-      <label class="form-label">Department</label>
-      <select class="form-select" [(ngModel)]="employee.departmentId">
-        <option *ngFor="let dept of departments" [value]="dept.id">{{dept.name}}</option>
-      </select>
-    </div>
-    <div class="mb-3">
-      <label class="form-label">Hire Date</label>
-      <input type="date" class="form-control" [(ngModel)]="employee.hireDate">
-    </div>
-  </div>
 </div>

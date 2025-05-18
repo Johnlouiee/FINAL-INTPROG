@@ -458,14 +458,30 @@ export class FakeBackendInterceptor implements HttpInterceptor {
 
             const employee = body;
 
-            // Validate required fields
-            if (!employee.firstName || !employee.lastName || !employee.email || !employee.departmentId) {
-                return error('Required fields are missing');
+            // Enhanced logging for debugging
+            console.log('Raw employee data received:', JSON.stringify(employee, null, 2));
+
+            // Validate required fields with specific error messages
+            const missingFields = [];
+            
+            // Check for position
+            if (!employee.position) {
+                missingFields.push('Position');
+            }
+            
+            // Check for departmentId
+            if (!employee.departmentId) {
+                missingFields.push('Department');
+            }
+            
+            // Check for hireDate
+            if (!employee.hireDate) {
+                missingFields.push('Hire Date');
             }
 
-            // Check if email already exists
-            if (employees.find(x => x.email.toLowerCase() === employee.email.toLowerCase())) {
-                return error('Email already exists');
+            if (missingFields.length > 0) {
+                console.log('Missing fields:', missingFields);
+                return error(`Missing required fields: ${missingFields.join(', ')}`);
             }
 
             try {
@@ -480,26 +496,39 @@ export class FakeBackendInterceptor implements HttpInterceptor {
                 const employeeId = `EMP${String(newId).padStart(3, '0')}`;
 
                 // Validate department exists
-                const department = departments.find(d => d.id === employee.departmentId);
+                const department = departments.find(d => d.id === parseInt(employee.departmentId));
                 if (!department) {
                     return error('Invalid department');
                 }
 
-                // Set default values
-                employee.id = newId;
-                employee.employeeId = employeeId;
-                employee.status = 'Active';
-                employee.created = new Date();
-                employee.updated = new Date();
+                // Create new employee object with proper field names
+                const newEmployee = {
+                    id: newId,
+                    employeeId: employeeId,
+                    firstName: employee.firstName || employee.first_name || '',
+                    lastName: employee.lastName || employee.last_name || '',
+                    email: employee.email || '',
+                    phone: employee.phone || '',
+                    departmentId: parseInt(employee.departmentId),
+                    position: employee.position,
+                    hireDate: new Date(employee.hireDate),
+                    salary: employee.salary ? parseFloat(employee.salary) : 0,
+                    status: employee.status || 'Active',
+                    created: new Date(),
+                    updated: new Date()
+                };
+
+                console.log('New employee object created:', JSON.stringify(newEmployee, null, 2));
 
                 // Add new employee to array
-                employees.push(employee);
+                employees.push(newEmployee);
                 
                 // Save updated employees array to local storage
                 localStorage.setItem(employeesKey, JSON.stringify(employees));
                 
-                return ok(employee);
+                return ok(newEmployee);
             } catch (err: any) {
+                console.error('Error creating employee:', err);
                 return error('Error creating employee: ' + (err.message || 'Unknown error'));
             }
         }
