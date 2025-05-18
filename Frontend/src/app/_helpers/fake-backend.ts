@@ -5,7 +5,30 @@ import { delay, mergeMap, materialize, dematerialize } from 'rxjs/operators';
 
 // array in local storage for registered users
 const usersKey = 'angular-10-jwt-refresh-token-users';
-let users: any[] = JSON.parse(localStorage.getItem(usersKey)!) || [];
+let users: any[] = JSON.parse(localStorage.getItem(usersKey)!) || [
+    {
+        id: 1,
+        email: 'admin@admin.com',
+        password: 'admin',
+        firstName: 'Admin',
+        lastName: 'User',
+        role: 'Admin',
+        isVerified: true,
+        isActive: true,
+        jwtToken: 'fake-jwt-token-admin'
+    },
+    {
+        id: 2,
+        email: 'user@user.com',
+        password: 'user',
+        firstName: 'Normal',
+        lastName: 'User',
+        role: 'User',
+        isVerified: true,
+        isActive: true,
+        jwtToken: 'fake-jwt-token-user'
+    }
+];
 
 @Injectable()
 export class FakeBackendInterceptor implements HttpInterceptor {
@@ -56,18 +79,34 @@ export class FakeBackendInterceptor implements HttpInterceptor {
         function authenticate() {
             const { email, password } = body;
             const user = users.find(x => x.email === email && x.password === password);
-            if (!user) return error('Email or password is incorrect');
+            
+            if (!user) {
+                return error('Email or password is incorrect');
+            }
+
+            if (!user.isVerified) {
+                return error('Email not verified');
+            }
+
+            if (!user.isActive) {
+                return error('Account is deactivated');
+            }
+
             return ok({
                 ...basicDetails(user),
-                jwtToken: 'fake-jwt-token'
-            })
+                jwtToken: user.jwtToken
+            });
         }
 
         function refreshToken() {
+            const user = getUserFromToken();
+            if (!user) {
+                return unauthorized();
+            }
             return ok({
-                ...basicDetails(getUserFromToken()),
-                jwtToken: 'fake-jwt-token'
-            })
+                ...basicDetails(user),
+                jwtToken: user.jwtToken
+            });
         }
 
         function revokeToken() {
@@ -75,13 +114,17 @@ export class FakeBackendInterceptor implements HttpInterceptor {
         }
 
         function register() {
-            const user = body
+            const user = body;
 
             if (users.find(x => x.email === user.email)) {
-                return error('Email "' + user.email + '" is already registered')
+                return error('Email "' + user.email + '" is already registered');
             }
 
             user.id = users.length ? Math.max(...users.map(x => x.id)) + 1 : 1;
+            user.isVerified = true;
+            user.isActive = true;
+            user.role = 'User';
+            user.jwtToken = `fake-jwt-token-${user.id}`;
             users.push(user);
             localStorage.setItem(usersKey, JSON.stringify(users));
             return ok();
@@ -112,6 +155,7 @@ export class FakeBackendInterceptor implements HttpInterceptor {
             if (!isLoggedIn()) return unauthorized();
 
             const user = users.find(x => x.id === idFromUrl());
+            if (!user) return error('User not found');
             return ok(basicDetails(user));
         }
 
@@ -120,6 +164,7 @@ export class FakeBackendInterceptor implements HttpInterceptor {
 
             let params = body;
             let user = users.find(x => x.id === idFromUrl());
+            if (!user) return error('User not found');
 
             // only update password if entered
             if (!params.password) {
@@ -144,24 +189,27 @@ export class FakeBackendInterceptor implements HttpInterceptor {
         // helper functions
 
         function ok(body?: any) {
-            return of(new HttpResponse({ status: 200, body }))
+            return of(new HttpResponse({ status: 200, body }));
         }
 
         function error(message: string) {
-            return throwError({ error: { message } });
+            return throwError(() => ({ error: { message } }));
         }
 
         function unauthorized() {
-            return throwError({ status: 401, error: { message: 'Unauthorized' } });
+            return throwError(() => ({ status: 401, error: { message: 'Unauthorized' } }));
         }
 
         function basicDetails(user: any) {
-            const { id, email, firstName, lastName, role } = user;
-            return { id, email, firstName, lastName, role };
+            const { id, email, firstName, lastName, role, isVerified, isActive } = user;
+            return { id, email, firstName, lastName, role, isVerified, isActive };
         }
 
         function isLoggedIn() {
-            return headers.get('Authorization') === 'Bearer fake-jwt-token';
+            const authHeader = headers.get('Authorization');
+            if (!authHeader) return false;
+            const token = authHeader.split(' ')[1];
+            return users.some(x => x.jwtToken === token);
         }
 
         function idFromUrl() {
@@ -170,9 +218,10 @@ export class FakeBackendInterceptor implements HttpInterceptor {
         }
 
         function getUserFromToken() {
-            const token = headers.get('Authorization')?.split(' ')[1];
-            const user = users.find(x => x.jwtToken === token);
-            return user;
+            const authHeader = headers.get('Authorization');
+            if (!authHeader) return null;
+            const token = authHeader.split(' ')[1];
+            return users.find(x => x.jwtToken === token);
         }
     }
 }
