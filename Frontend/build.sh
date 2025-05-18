@@ -1,19 +1,11 @@
 #!/bin/bash
 set -e
 
-# Clean node_modules and package-lock.json
-rm -rf node_modules
-rm -f package-lock.json
-
 # Install dependencies
 npm install
 
-# Install Angular CLI and build-angular globally
-npm install -g @angular/cli@15.2.10
-npm install -g @angular-devkit/build-angular@15.2.10
-
-# Install build-angular locally with exact version
-npm install @angular-devkit/build-angular@15.2.10 --save-dev --exact
+# Install Angular CLI globally
+npm install -g @angular/cli@17.3.10
 
 # Set environment variables
 export PATH=$PATH:$(npm config get prefix)/bin
