@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable } from 'rxjs';
-import { map, finalize } from 'rxjs/operators';
+import { BehaviorSubject, Observable, throwError } from 'rxjs';
+import { map, finalize, catchError } from 'rxjs/operators';
 
 import { environment } from '../../environments/environment';
 import { Account } from '../_models/account';
@@ -38,20 +38,27 @@ export class AccountService {
   }
   
   login(email: string, password: string) {
+    console.log('Attempting login to:', `${baseUrl}/accounts/authenticate`);
     return this.http.post<any>(`${baseUrl}/accounts/authenticate`, { email, password }, { withCredentials: true })
-      .pipe(map(account => {
-        console.log('Login response:', account);
-        // Ensure role is set correctly
-        if (account.role === 'Admin') {
-          account.role = Role.Admin;
-        } else if (account.role === 'User') {
-          account.role = Role.User;
-        }
-        console.log('Processed account:', account);
-        this.setAccount(account);
-        this.startRefreshTokenTimer();
-        return account;
-      }));
+      .pipe(
+        map(account => {
+          console.log('Login response:', account);
+          // Ensure role is set correctly
+          if (account.role === 'Admin') {
+            account.role = Role.Admin;
+          } else if (account.role === 'User') {
+            account.role = Role.User;
+          }
+          console.log('Processed account:', account);
+          this.setAccount(account);
+          this.startRefreshTokenTimer();
+          return account;
+        }),
+        catchError(error => {
+          console.error('Login error:', error);
+          return throwError(() => error);
+        })
+      );
   }
 
   logout() {
@@ -62,20 +69,27 @@ export class AccountService {
   }
 
   refreshToken() {
+    console.log('Refreshing token from:', `${baseUrl}/accounts/refresh-token`);
     return this.http.post<any>(`${baseUrl}/accounts/refresh-token`, {}, { withCredentials: true })
-      .pipe(map((account) => {
-        console.log('Refresh token response:', account);
-        // Ensure role is set correctly
-        if (account.role === 'Admin') {
-          account.role = Role.Admin;
-        } else if (account.role === 'User') {
-          account.role = Role.User;
-        }
-        console.log('Processed account:', account);
-        this.setAccount(account);
-        this.startRefreshTokenTimer();
-        return account;
-      }));
+      .pipe(
+        map((account) => {
+          console.log('Refresh token response:', account);
+          // Ensure role is set correctly
+          if (account.role === 'Admin') {
+            account.role = Role.Admin;
+          } else if (account.role === 'User') {
+            account.role = Role.User;
+          }
+          console.log('Processed account:', account);
+          this.setAccount(account);
+          this.startRefreshTokenTimer();
+          return account;
+        }),
+        catchError(error => {
+          console.error('Refresh token error:', error);
+          return throwError(() => error);
+        })
+      );
   }
 
   register(account: Account) {
