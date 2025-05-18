@@ -228,7 +228,7 @@ export class FakeBackendInterceptor implements HttpInterceptor {
         }
 
         function getUserFromToken() {
-            const authHeader = headers.get('Authorization');
+        const authHeader = headers.get('Authorization');
             if (!authHeader) return null;
             
             const token = authHeader.split(' ')[1];

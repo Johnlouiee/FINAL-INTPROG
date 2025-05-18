@@ -10,8 +10,9 @@
                             </div>
                         </div>
                         
-                        <div *ngIf="!loading">
-                            <h1 class="display-4 mb-4">Welcome, {{account?.firstName || 'Guest'}}!</h1>
+                        <!-- Logged in user view -->
+                        <div *ngIf="!loading && account">
+                            <h1 class="display-4 mb-4">Welcome, {{account.firstName}}!</h1>
                             <p class="lead mb-4">You're logged in to the User Management System</p>
                             
                             <div class="row mt-4">
@@ -25,12 +26,67 @@
                                     </div>
                                 </div>
                                 
-                                <div class="col-md-6" *ngIf="account?.role === 'Admin'">
+                                <div class="col-md-6" *ngIf="account.role === 'Admin'">
                                     <div class="card mb-3">
                                         <div class="card-body">
                                             <h5 class="card-title">Admin Panel</h5>
                                             <p class="card-text">Manage users, departments, and requests</p>
                                             <a routerLink="/admin" class="btn btn-primary">Go to Admin</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Public landing page -->
+                        <div *ngIf="!loading && !account" class="text-center">
+                            <h1 class="display-4 mb-4">Welcome to User Management System</h1>
+                            <p class="lead mb-4">A secure and efficient way to manage users and their roles</p>
+                            
+                            <div class="row mt-4">
+                                <div class="col-md-6">
+                                    <div class="card mb-3">
+                                        <div class="card-body">
+                                            <h5 class="card-title">Get Started</h5>
+                                            <p class="card-text">Create an account to access the system</p>
+                                            <a routerLink="/accounts/register" class="btn btn-primary">Register</a>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="card mb-3">
+                                        <div class="card-body">
+                                            <h5 class="card-title">Already Registered?</h5>
+                                            <p class="card-text">Sign in to your account</p>
+                                            <a routerLink="/accounts/login" class="btn btn-primary">Login</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mt-5">
+                                <h3>Features</h3>
+                                <div class="row mt-4">
+                                    <div class="col-md-4">
+                                        <div class="feature-item">
+                                            <i class="fas fa-user-shield fa-3x mb-3"></i>
+                                            <h5>Secure Authentication</h5>
+                                            <p>Protected with JWT and role-based access control</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="feature-item">
+                                            <i class="fas fa-users-cog fa-3x mb-3"></i>
+                                            <h5>User Management</h5>
+                                            <p>Easily manage users and their permissions</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="feature-item">
+                                            <i class="fas fa-chart-line fa-3x mb-3"></i>
+                                            <h5>Admin Dashboard</h5>
+                                            <p>Powerful tools for administrators</p>
                                         </div>
                                     </div>
                                 </div>
