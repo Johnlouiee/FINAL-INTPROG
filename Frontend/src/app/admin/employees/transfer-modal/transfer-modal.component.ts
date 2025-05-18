@@ -64,12 +64,7 @@ export class TransferModalComponent implements OnInit {
     this.loading = true;
     this.error = '';
 
-    const updateData = {
-      ...this.employee,
-      departmentId: this.selectedDepartmentId
-    };
-
-    this.employeeService.update(this.employee.id, updateData)
+    this.employeeService.transfer(this.employee.id, this.selectedDepartmentId)
       .pipe(first())
       .subscribe({
         next: () => {

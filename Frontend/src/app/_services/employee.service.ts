@@ -32,4 +32,8 @@ export class EmployeeService {
     delete(id: string) {
         return this.http.delete(`${this.apiUrl}/${id}`);
     }
+
+    transfer(id: string, departmentId: string) {
+        return this.http.post(`${this.apiUrl}/${id}/transfer`, { departmentId });
+    }
 } 
