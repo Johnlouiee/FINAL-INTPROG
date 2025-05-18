@@ -3,12 +3,12 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve --host 0.0.0.0 --port $PORT",
-    "build": "ng build --configuration production",
-    "lint": "ng lint",
-    "watch": "ng build --watch --configuration development",
-    "e2e": "ng e2e",
-    "test": "ng test"
+    "start": "npx ng serve --host 0.0.0.0 --port $PORT",
+    "build": "npx ng build --configuration production",
+    "lint": "npx ng lint",
+    "watch": "npx ng build --watch --configuration development",
+    "e2e": "npx ng e2e",
+    "test": "npx ng test"
   },
   "private": true,
   "dependencies": {
