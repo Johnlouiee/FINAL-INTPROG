@@ -28,6 +28,8 @@ async function initialize() {
         db.RefreshToken = require('../accounts/refresh-token.model.js')(sequelize);
         db.Employee = require('../employees/employee.model')(sequelize, Sequelize);
         db.Department = require('../departments/department.model')(sequelize, Sequelize);
+        db.Request = require('../requests/request.model')(sequelize, Sequelize);
+        db.RequestItem = require('../requests/request-item.model')(sequelize, Sequelize);
 
         // Set up associations
         Object.keys(db).forEach(modelName => {
@@ -37,7 +39,7 @@ async function initialize() {
         });
 
         // Sync models
-        await sequelize.sync({ alter: false });
+        await sequelize.sync({ alter: true });
 
         console.log('Database connected successfully');
     } catch (error) {

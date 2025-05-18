@@ -15,8 +15,10 @@ import { EmployeeService } from '../employees/employee.service';
 export class AddEditComponent implements OnInit {
   id?: string;
   loading = false;
+  loadingEmployees = false;
   errorMessage = '';
   employees: any[] = [];
+  activeEmployees: any[] = [];
   request: any = {
     type: '',
     employeeId: '',
@@ -33,17 +35,7 @@ export class AddEditComponent implements OnInit {
 
   ngOnInit() {
     this.id = this.route.snapshot.params['id'];
-    
-    // Load employees
-    this.employeeService.getEmployees().subscribe({
-      next: (employees) => {
-        this.employees = employees;
-      },
-      error: (err) => {
-        console.error('Failed to load employees', err);
-        this.errorMessage = 'Failed to load employees';
-      }
-    });
+    this.loadEmployees();
     
     if (this.id) {
       this.loading = true;
@@ -52,6 +44,9 @@ export class AddEditComponent implements OnInit {
           next: (data) => {
             this.request = data;
             this.loading = false;
+            if (!this.request.requestItems) {
+              this.request.requestItems = [];
+            }
           },
           error: (error) => {
             this.errorMessage = error;
@@ -61,11 +56,32 @@ export class AddEditComponent implements OnInit {
     }
   }
 
-  addItem() {
-    this.request.requestItems.push({
-      name: '',
-      quantity: 1
+  loadEmployees() {
+    this.loadingEmployees = true;
+    this.errorMessage = '';
+    
+    this.employeeService.getEmployees().subscribe({
+      next: (employees) => {
+        this.employees = employees;
+        this.activeEmployees = this.employees.filter(emp => (emp.status || '').toLowerCase() === 'active');
+        if (this.activeEmployees.length === 0) {
+          this.errorMessage = 'No active employees found';
+        }
+        this.loadingEmployees = false;
+      },
+      error: (err) => {
+        console.error('Failed to load employees', err);
+        this.errorMessage = 'Failed to load employees. Please try again.';
+        this.loadingEmployees = false;
+      }
     });
+  }
+
+  addItem() {
+    if (!this.request.requestItems) {
+      this.request.requestItems = [];
+    }
+    this.request.requestItems.push({ name: '', quantity: 1 });
   }
 
   removeItem(index: number) {
@@ -111,8 +127,15 @@ export class AddEditComponent implements OnInit {
           },
           error: (error) => {
             console.error('Update error:', error);
-            this.errorMessage = error;
             this.loading = false;
+            // Try to extract a more specific error message
+            if (error.error && error.error.message) {
+              this.errorMessage = `Server Error: ${error.error.message}`;
+            } else if (error.message) {
+              this.errorMessage = `Server Error: ${error.message}`;
+            } else {
+              this.errorMessage = 'Server Error: An unexpected error occurred.';
+            }
           }
         });
     } else {
@@ -123,8 +146,15 @@ export class AddEditComponent implements OnInit {
           },
           error: (error) => {
             console.error('Save error:', error);
-            this.errorMessage = error;
             this.loading = false;
+            // Try to extract a more specific error message
+            if (error.error && error.error.message) {
+              this.errorMessage = `Server Error: ${error.error.message}`;
+            } else if (error.message) {
+              this.errorMessage = `Server Error: ${error.message}`;
+            } else {
+              this.errorMessage = 'Server Error: An unexpected error occurred.';
+            }
           }
         });
     }
