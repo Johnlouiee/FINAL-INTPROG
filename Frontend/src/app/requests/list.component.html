@@ -11,22 +11,22 @@
         <thead>
           <tr>
             <th>Type</th>
-            <th>Employee</th>
-            <th>Items</th>
+            <th>Employee ID</th>
+            <th>Description</th>
             <th>Status</th>
+            <th>Created</th>
+            <th>Items</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
           <tr *ngFor="let request of requests">
-            <td>{{request.type}}</td>
-            <td>{{request.employee?.employeeId || 'N/A'}}</td>
-            <td>
-              <ul>
-                <li *ngFor="let item of request.requestItems">{{item.name}} ({{item.quantity}})</li>
-              </ul>
-            </td>
-            <td>{{request.status}}</td>
+            <td>{{request.type || 'N/A'}}</td>
+            <td>{{request.employee?.employeeId || request.employeeId || 'N/A'}}</td>
+            <td>{{request.description || 'N/A'}}</td>
+            <td>{{request.status || 'N/A'}}</td>
+            <td>{{request.createdAt ? (request.createdAt | date:'short') : 'N/A'}}</td>
+            <td>{{formatRequestItems(request.requestItems)}}</td>
             <td>
               <button *ngIf="account()?.role === 'Admin'" class="btn btn-sm btn-primary me-1" (click)="edit(request.id)">Edit</button>
               <button *ngIf="account()?.role === 'Admin'" class="btn btn-sm btn-danger" (click)="delete(request.id)">Delete</button>

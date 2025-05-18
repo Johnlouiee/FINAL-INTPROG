@@ -141,4 +141,13 @@ export class RequestService {
                 catchError(this.handleError.bind(this))
             );
     }
+
+    getByEmployeeId(employeeId: string) {
+        return this.http.get<any[]>(`${environment.apiUrl}/requests/employee/${employeeId}`, this.getRequestOptions())
+            .pipe(
+                tap(response => console.log('Get By EmployeeId Response:', response)),
+                timeout(5000),
+                catchError(this.handleError.bind(this))
+            );
+    }
 } 

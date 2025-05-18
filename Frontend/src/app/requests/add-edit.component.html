@@ -22,6 +22,11 @@
       <div *ngIf="errorMessage" class="text-danger mt-1">{{ errorMessage }}</div>
     </div>
 
+    <div class="mb-3">
+      <label class="form-label">Description</label>
+      <textarea class="form-control" [(ngModel)]="request.description" rows="2" placeholder="Enter request description..."></textarea>
+    </div>
+
     <button class="btn btn-secondary mb-3" (click)="addItem()">Add Item</button>
 
     <div *ngFor="let item of request.requestItems; let i = index" class="card mb-2">

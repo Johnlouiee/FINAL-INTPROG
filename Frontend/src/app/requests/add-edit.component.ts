@@ -53,6 +53,9 @@ export class AddEditComponent implements OnInit {
             this.loading = false;
           }
         });
+    } else {
+      // Reset form for add
+      this.request = { type: '', employeeId: '', description: '', status: 'Pending', requestItems: [] };
     }
   }
 
@@ -61,7 +64,7 @@ export class AddEditComponent implements OnInit {
     this.errorMessage = '';
     
     this.employeeService.getEmployees().subscribe({
-      next: (employees) => {
+      next: (employees: any[]) => {
         this.employees = employees;
         this.activeEmployees = this.employees.filter(emp => (emp.status || '').toLowerCase() === 'active');
         if (this.activeEmployees.length === 0) {
@@ -69,7 +72,7 @@ export class AddEditComponent implements OnInit {
         }
         this.loadingEmployees = false;
       },
-      error: (err) => {
+      error: (err: any) => {
         console.error('Failed to load employees', err);
         this.errorMessage = 'Failed to load employees. Please try again.';
         this.loadingEmployees = false;
@@ -90,7 +93,6 @@ export class AddEditComponent implements OnInit {
 
   save() {
     this.errorMessage = '';
-    
     // Validate request
     if (!this.request.type) {
       this.errorMessage = 'Type is required';
@@ -100,12 +102,14 @@ export class AddEditComponent implements OnInit {
       this.errorMessage = 'Employee is required';
       return;
     }
+    if (!this.request.description) {
+      this.errorMessage = 'Description is required';
+      return;
+    }
     if (!this.request.requestItems || this.request.requestItems.length === 0) {
       this.errorMessage = 'At least one item is required';
       return;
     }
-    
-    // Validate items
     for (const item of this.request.requestItems) {
       if (!item.name) {
         this.errorMessage = 'Item name is required';
@@ -116,9 +120,7 @@ export class AddEditComponent implements OnInit {
         return;
       }
     }
-
     this.loading = true;
-
     if (this.id) {
       this.requestService.update(this.id, this.request)
         .subscribe({
@@ -126,9 +128,7 @@ export class AddEditComponent implements OnInit {
             this.router.navigate(['/admin/requests']);
           },
           error: (error) => {
-            console.error('Update error:', error);
             this.loading = false;
-            // Try to extract a more specific error message
             if (error.error && error.error.message) {
               this.errorMessage = `Server Error: ${error.error.message}`;
             } else if (error.message) {
@@ -145,9 +145,7 @@ export class AddEditComponent implements OnInit {
             this.router.navigate(['/admin/requests']);
           },
           error: (error) => {
-            console.error('Save error:', error);
             this.loading = false;
-            // Try to extract a more specific error message
             if (error.error && error.error.message) {
               this.errorMessage = `Server Error: ${error.error.message}`;
             } else if (error.message) {

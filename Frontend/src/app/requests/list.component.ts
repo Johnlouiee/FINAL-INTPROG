@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { Router, RouterModule } from '@angular/router';
+import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { AccountService } from '../_services/account.service';
 import { RequestService } from '../_services/request.service';
 import { first } from 'rxjs/operators';
@@ -19,16 +19,40 @@ export class ListComponent implements OnInit {
   constructor(
     private router: Router,
     private accountService: AccountService,
-    private requestService: RequestService
+    private requestService: RequestService,
+    private route: ActivatedRoute
   ) {}
 
   ngOnInit() {
-    this.loadRequests();
+    this.route.queryParams.subscribe(params => {
+      const employeeId = params['employeeId'];
+      if (employeeId) {
+        this.loadRequestsByEmployee(employeeId);
+      } else {
+        this.loadRequests();
+      }
+    });
   }
 
   loadRequests() {
     this.loading = true;
     this.requestService.getAll()
+      .pipe(first())
+      .subscribe({
+        next: (requests) => {
+          this.requests = requests;
+          this.loading = false;
+        },
+        error: (error) => {
+          this.error = error;
+          this.loading = false;
+        }
+      });
+  }
+
+  loadRequestsByEmployee(employeeId: string) {
+    this.loading = true;
+    this.requestService.getByEmployeeId(employeeId)
       .pipe(first())
       .subscribe({
         next: (requests) => {
@@ -71,5 +95,10 @@ export class ListComponent implements OnInit {
 
   goBack() {
     this.router.navigate(['/admin/employees']);
+  }
+
+  formatRequestItems(items: any[]): string {
+    if (!items || items.length === 0) return 'N/A';
+    return items.map(item => `${item.name} (${item.quantity})`).join(', ');
   }
 } 

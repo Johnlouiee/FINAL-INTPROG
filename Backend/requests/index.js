@@ -13,11 +13,26 @@ router.delete('/:id', authorize(Role.Admin), _delete);
 
 async function create(req, res, next) {
     try {
+        // Validation
+        if (!req.body.employeeId || !req.body.type || !req.body.description) {
+            return res.status(400).json({ message: 'employeeId, type, and description are required.' });
+        }
+
+        // Validate request items if provided
+        if (req.body.requestItems) {
+            for (const item of req.body.requestItems) {
+                if (!item.name || !item.quantity) {
+                    return res.status(400).json({ message: 'Request items must have name and quantity.' });
+                }
+            }
+        }
+
         const requestData = {
-            employeeId: req.user.employeeId,
+            employeeId: req.body.employeeId,
             type: req.body.type,
             description: req.body.description,
-            status: 'Pending',
+            status: req.body.status || 'Pending',
+            created: new Date(),
             requestItems: req.body.requestItems || []
         };
 
@@ -40,7 +55,8 @@ async function getAll(req, res, next) {
             include: [
                 { model: db.RequestItem, as: 'requestItems' },
                 { model: db.Employee, as: 'employee' }
-            ]
+            ],
+            order: [['created', 'DESC']]
         });
         res.json(requests);
     } catch (err) {
@@ -57,10 +73,12 @@ async function getById(req, res, next) {
             ]
         });
         
-        if (!request) throw new Error('Request not found');
+        if (!request) {
+            return res.status(404).json({ message: 'Request not found' });
+        }
         
         if (req.user.role !== Role.Admin && request.employeeId !== req.user.employeeId) {
-            throw new Error('Unauthorized');
+            return res.status(403).json({ message: 'Unauthorized' });
         }
         
         res.json(request);
@@ -76,7 +94,8 @@ async function getByEmployeeId(req, res, next) {
             include: [
                 { model: db.RequestItem, as: 'requestItems' },
                 { model: db.Employee, as: 'employee' }
-            ]
+            ],
+            order: [['created', 'DESC']]
         });
         res.json(requests);
     } catch (err) {
@@ -89,18 +108,29 @@ async function update(req, res, next) {
         const request = await db.Request.findByPk(req.params.id, {
             include: [{ model: db.RequestItem, as: 'requestItems' }]
         });
-        
-        if (!request) throw new Error('Request not found');
+
+        if (!request) {
+            return res.status(404).json({ message: 'Request not found' });
+        }
 
         // Update request
         await request.update({
+            employeeId: req.body.employeeId,
             type: req.body.type,
             description: req.body.description,
-            status: req.body.status
+            status: req.body.status,
+            updated: new Date()
         });
 
-        // Update request items
+        // Update request items if provided
         if (req.body.requestItems) {
+            // Validate request items
+            for (const item of req.body.requestItems) {
+                if (!item.name || !item.quantity) {
+                    return res.status(400).json({ message: 'Request items must have name and quantity.' });
+                }
+            }
+
             // Delete existing items
             await db.RequestItem.destroy({
                 where: { requestId: request.id }
@@ -115,7 +145,6 @@ async function update(req, res, next) {
             );
         }
 
-        // Get updated request with items
         const updatedRequest = await db.Request.findByPk(request.id, {
             include: [
                 { model: db.RequestItem, as: 'requestItems' },
@@ -132,9 +161,12 @@ async function update(req, res, next) {
 async function _delete(req, res, next) {
     try {
         const request = await db.Request.findByPk(req.params.id);
-        if (!request) throw new Error('Request not found');
         
-        // Delete associated request items first
+        if (!request) {
+            return res.status(404).json({ message: 'Request not found' });
+        }
+
+        // Delete associated request items first (though CASCADE should handle this)
         await db.RequestItem.destroy({
             where: { requestId: request.id }
         });
@@ -142,7 +174,7 @@ async function _delete(req, res, next) {
         // Delete the request
         await request.destroy();
         
-        res.json({ message: 'Request deleted' });
+        res.json({ message: 'Request deleted successfully' });
     } catch (err) {
         next(err);
     }

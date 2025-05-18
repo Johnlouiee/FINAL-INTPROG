@@ -16,7 +16,7 @@ module.exports = (sequelize) => {
             }
         },
         type: {
-            type: DataTypes.STRING,
+            type: DataTypes.STRING(50),
             allowNull: false
         },
         description: {
@@ -24,19 +24,22 @@ module.exports = (sequelize) => {
             allowNull: true
         },
         status: {
-            type: DataTypes.STRING,
+            type: DataTypes.STRING(50),
             allowNull: false,
             defaultValue: 'Pending'
         },
-        createdAt: {
+        created: {
             type: DataTypes.DATE,
             allowNull: false,
             defaultValue: DataTypes.NOW
         },
-        updatedAt: {
+        updated: {
             type: DataTypes.DATE,
             allowNull: true
         }
+    }, {
+        timestamps: false,
+        tableName: 'Requests'
     });
 
     Request.associate = function(models) {
@@ -46,7 +49,8 @@ module.exports = (sequelize) => {
         });
         Request.hasMany(models.RequestItem, {
             foreignKey: 'requestId',
-            as: 'requestItems'
+            as: 'requestItems',
+            onDelete: 'CASCADE'
         });
     };
 
