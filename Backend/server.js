@@ -16,6 +16,7 @@ app.use(cookieParser());
 // Allow CORS requests from specified origins
 const allowedOrigins = process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(',') : [
   'http://localhost:4200',
+  'https://my-final-louie02.web.app',
   'https://final-intprog-frontend.onrender.com'
 ];
 app.use(cors({
@@ -23,10 +24,13 @@ app.use(cors({
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
+      console.log('CORS blocked request from origin:', origin);
       callback(new Error('Not allowed by CORS'));
     }
   },
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
 }));
 
 // API routes
