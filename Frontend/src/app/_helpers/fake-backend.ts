@@ -52,6 +52,8 @@ export class FakeBackendInterceptor implements HttpInterceptor {
                     return getUsers();
                 case url.match(/\/accounts\/\d+$/) && method === 'GET':
                     return getUserById();
+                case url.match(/\/accounts\/profile$/) && method === 'GET':
+                    return getProfile();
                 case url.match(/\/accounts\/\d+$/) && method === 'PUT':
                     return updateUser();
                 case url.match(/\/accounts\/\d+$/) && method === 'DELETE':
@@ -230,6 +232,23 @@ export class FakeBackendInterceptor implements HttpInterceptor {
             users = users.filter(x => x.id !== idFromUrl());
             localStorage.setItem(usersKey, JSON.stringify(users));
             return ok();
+        }
+
+        function getProfile() {
+            if (!isLoggedIn()) return unauthorized();
+
+            const user = getUserFromToken();
+            if (!user) return unauthorized();
+
+            return ok({
+                id: user.id,
+                email: user.email,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                role: user.role,
+                isVerified: user.isVerified,
+                isActive: user.isActive
+            });
         }
 
         // helper functions
