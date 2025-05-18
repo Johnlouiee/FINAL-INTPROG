@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpRequest, HttpHandler, HttpEvent, HttpInterceptor } from '@angular/common/http';
+import { HttpRequest, HttpHandler, HttpEvent, HttpInterceptor, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
@@ -11,29 +11,43 @@ export class ErrorInterceptor implements HttpInterceptor {
     constructor(private accountService: AccountService) { }
 
     intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-        return next.handle(request).pipe(catchError(err => {
-            console.error('Error Interceptor:', err);
-            
-            if (err.status === 0) {
-                // Network error or CORS error
-                console.error('Network or CORS error. Please check if the backend is running at:', environment.apiUrl);
-                return throwError(() => 'Unable to connect to the server. Please check if the server is running.');
-            }
+        return next.handle(request).pipe(
+            catchError((error: HttpErrorResponse) => {
+                let errorMessage = 'An error occurred';
+                
+                // Handle network or CORS errors
+                if (error.status === 0) {
+                    console.error('Network or CORS error:', error);
+                    errorMessage = 'Unable to connect to the server. Please check if the backend is running and accessible.';
+                }
+                // Handle 401 Unauthorized
+                else if (error.status === 401) {
+                    console.error('Unauthorized error:', error);
+                    // Auto logout if 401 response returned from api
+                    this.accountService.logout();
+                    errorMessage = 'Your session has expired. Please log in again.';
+                }
+                // Handle 403 Forbidden
+                else if (error.status === 403) {
+                    console.error('Forbidden error:', error);
+                    errorMessage = 'You do not have permission to access this resource.';
+                }
+                // Handle other errors
+                else {
+                    console.error('API error:', error);
+                    // Get server-side error
+                    errorMessage = error.error?.message || error.statusText || 'An unexpected error occurred';
+                }
 
-            if ([401, 403].includes(err.status) && this.accountService.accountValue) {
-                // auto logout if 401 or 403 response returned from api
-                this.accountService.logout();
-            }
+                console.error('Error details:', {
+                    status: error.status,
+                    statusText: error.statusText,
+                    message: errorMessage,
+                    url: request.url
+                });
 
-            const error = (err && err.error && err.error.message) || err.statusText;
-            console.error('Error details:', {
-                status: err.status,
-                statusText: err.statusText,
-                error: err.error,
-                message: error
-            });
-            
-            return throwError(() => error);
-        }));
+                return throwError(() => error);
+            })
+        );
     }
 }

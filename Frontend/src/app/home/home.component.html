@@ -1,6 +1,44 @@
-<div class="p-4">
-    <div class="container">
-        <h1>Hi {{account?.firstName}}!</h1>
-        <p>You're logged in with Angular 10 & JWT!!</p>
+<div class="home-container">
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card shadow">
+                    <div class="card-body text-center">
+                        <div *ngIf="loading" class="text-center">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                        
+                        <div *ngIf="!loading">
+                            <h1 class="display-4 mb-4">Welcome, {{account?.firstName || 'Guest'}}!</h1>
+                            <p class="lead mb-4">You're logged in to the User Management System</p>
+                            
+                            <div class="row mt-4">
+                                <div class="col-md-6">
+                                    <div class="card mb-3">
+                                        <div class="card-body">
+                                            <h5 class="card-title">Your Profile</h5>
+                                            <p class="card-text">View and update your profile information</p>
+                                            <a routerLink="/profile" class="btn btn-primary">View Profile</a>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6" *ngIf="account?.role === 'Admin'">
+                                    <div class="card mb-3">
+                                        <div class="card-body">
+                                            <h5 class="card-title">Admin Panel</h5>
+                                            <p class="card-text">Manage users, departments, and requests</p>
+                                            <a routerLink="/admin" class="btn btn-primary">Go to Admin</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
