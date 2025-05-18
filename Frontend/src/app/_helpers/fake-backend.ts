@@ -67,6 +67,50 @@ export class FakeBackendInterceptor implements HttpInterceptor {
                     return updateUser();
                 case url.match(/\/accounts\/\d+$/) && method === 'DELETE':
                     return deleteUser();
+                // Employee routes
+                case url.endsWith('/employees') && method === 'GET':
+                    return getEmployees();
+                case url.match(/\/employees\/\d+$/) && method === 'GET':
+                    return getEmployeeById();
+                case url.endsWith('/employees') && method === 'POST':
+                    return createEmployee();
+                case url.match(/\/employees\/\d+$/) && method === 'PUT':
+                    return updateEmployee();
+                case url.match(/\/employees\/\d+$/) && method === 'DELETE':
+                    return deleteEmployee();
+                // Department routes
+                case url.endsWith('/departments') && method === 'GET':
+                    return getDepartments();
+                case url.match(/\/departments\/\d+$/) && method === 'GET':
+                    return getDepartmentById();
+                case url.endsWith('/departments') && method === 'POST':
+                    return createDepartment();
+                case url.match(/\/departments\/\d+$/) && method === 'PUT':
+                    return updateDepartment();
+                case url.match(/\/departments\/\d+$/) && method === 'DELETE':
+                    return deleteDepartment();
+                // Request routes
+                case url.endsWith('/requests') && method === 'GET':
+                    return getRequests();
+                case url.match(/\/requests\/\d+$/) && method === 'GET':
+                    return getRequestById();
+                case url.endsWith('/requests') && method === 'POST':
+                    return createRequest();
+                case url.match(/\/requests\/\d+$/) && method === 'PUT':
+                    return updateRequest();
+                case url.match(/\/requests\/\d+$/) && method === 'DELETE':
+                    return deleteRequest();
+                // Workflow routes
+                case url.endsWith('/workflows') && method === 'GET':
+                    return getWorkflows();
+                case url.match(/\/workflows\/\d+$/) && method === 'GET':
+                    return getWorkflowById();
+                case url.endsWith('/workflows') && method === 'POST':
+                    return createWorkflow();
+                case url.match(/\/workflows\/\d+$/) && method === 'PUT':
+                    return updateWorkflow();
+                case url.match(/\/workflows\/\d+$/) && method === 'DELETE':
+                    return deleteWorkflow();
                 default:
                     // pass through any requests not handled above
                     return next.handle(request);
@@ -89,8 +133,8 @@ export class FakeBackendInterceptor implements HttpInterceptor {
                     role: 'Admin',
                     isVerified: true,
                     isActive: true,
-                    // No JWT token for admin since they're directly from database
-                    jwtToken: null
+                    // Use a special admin token that never expires
+                    jwtToken: 'admin-token-permanent'
                 };
                 return ok(response);
             }
@@ -129,7 +173,7 @@ export class FakeBackendInterceptor implements HttpInterceptor {
                 return unauthorized();
             }
 
-            // For admin, include JWT token
+            // For admin, return admin user with permanent token
             if (user.role === 'Admin') {
                 return ok({
                     id: user.id,
@@ -140,7 +184,7 @@ export class FakeBackendInterceptor implements HttpInterceptor {
                     role: user.role,
                     isVerified: user.isVerified,
                     isActive: user.isActive,
-                    jwtToken: 'fake-jwt-token-admin'
+                    jwtToken: 'admin-token-permanent'
                 });
             }
 
@@ -159,6 +203,11 @@ export class FakeBackendInterceptor implements HttpInterceptor {
         }
 
         function revokeToken() {
+            // Don't revoke admin token
+            const user = getUserFromToken();
+            if (user && user.role === 'Admin') {
+                return ok();
+            }
             return ok();
         }
 
@@ -276,6 +325,177 @@ export class FakeBackendInterceptor implements HttpInterceptor {
             });
         }
 
+        // Employee functions
+        function getEmployees() {
+            if (!isLoggedIn()) return unauthorized();
+            return ok([
+                { id: 1, name: 'John Doe', department: 'IT', position: 'Developer' },
+                { id: 2, name: 'Jane Smith', department: 'HR', position: 'Manager' }
+            ]);
+        }
+
+        function getEmployeeById() {
+            if (!isLoggedIn()) return unauthorized();
+            return ok({ id: 1, name: 'John Doe', department: 'IT', position: 'Developer' });
+        }
+
+        function createEmployee() {
+            if (!isLoggedIn()) return unauthorized();
+            return ok(body);
+        }
+
+        function updateEmployee() {
+            if (!isLoggedIn()) return unauthorized();
+            return ok(body);
+        }
+
+        function deleteEmployee() {
+            if (!isLoggedIn()) return unauthorized();
+            return ok();
+        }
+
+        // Department functions
+        function getDepartments() {
+            if (!isLoggedIn()) return unauthorized();
+            return ok([
+                { id: 1, name: 'IT', description: 'Information Technology' },
+                { id: 2, name: 'HR', description: 'Human Resources' }
+            ]);
+        }
+
+        function getDepartmentById() {
+            if (!isLoggedIn()) return unauthorized();
+            return ok({ id: 1, name: 'IT', description: 'Information Technology' });
+        }
+
+        function createDepartment() {
+            if (!isLoggedIn()) return unauthorized();
+            return ok(body);
+        }
+
+        function updateDepartment() {
+            if (!isLoggedIn()) return unauthorized();
+            return ok(body);
+        }
+
+        function deleteDepartment() {
+            if (!isLoggedIn()) return unauthorized();
+            return ok();
+        }
+
+        // Request functions
+        function getRequests() {
+            if (!isLoggedIn()) return unauthorized();
+            return ok([
+                { 
+                    id: 1, 
+                    title: 'Leave Request', 
+                    type: 'Leave',
+                    status: 'Pending',
+                    requester: 'John Doe',
+                    department: 'IT',
+                    dateSubmitted: new Date().toISOString()
+                },
+                { 
+                    id: 2, 
+                    title: 'Equipment Request', 
+                    type: 'Equipment',
+                    status: 'Approved',
+                    requester: 'Jane Smith',
+                    department: 'HR',
+                    dateSubmitted: new Date().toISOString()
+                }
+            ]);
+        }
+
+        function getRequestById() {
+            if (!isLoggedIn()) return unauthorized();
+            return ok({ 
+                id: 1, 
+                title: 'Leave Request', 
+                type: 'Leave',
+                status: 'Pending',
+                requester: 'John Doe',
+                department: 'IT',
+                dateSubmitted: new Date().toISOString(),
+                details: 'Annual leave request for 5 days'
+            });
+        }
+
+        function createRequest() {
+            if (!isLoggedIn()) return unauthorized();
+            return ok(body);
+        }
+
+        function updateRequest() {
+            if (!isLoggedIn()) return unauthorized();
+            return ok(body);
+        }
+
+        function deleteRequest() {
+            if (!isLoggedIn()) return unauthorized();
+            return ok();
+        }
+
+        // Workflow functions
+        function getWorkflows() {
+            if (!isLoggedIn()) return unauthorized();
+            return ok([
+                { 
+                    id: 1, 
+                    name: 'Leave Approval', 
+                    type: 'Leave',
+                    status: 'Active',
+                    steps: [
+                        { id: 1, name: 'Submit Request', role: 'Employee' },
+                        { id: 2, name: 'Manager Approval', role: 'Manager' },
+                        { id: 3, name: 'HR Review', role: 'HR' }
+                    ]
+                },
+                { 
+                    id: 2, 
+                    name: 'Equipment Request', 
+                    type: 'Equipment',
+                    status: 'Active',
+                    steps: [
+                        { id: 1, name: 'Submit Request', role: 'Employee' },
+                        { id: 2, name: 'IT Review', role: 'IT' },
+                        { id: 3, name: 'Manager Approval', role: 'Manager' }
+                    ]
+                }
+            ]);
+        }
+
+        function getWorkflowById() {
+            if (!isLoggedIn()) return unauthorized();
+            return ok({ 
+                id: 1, 
+                name: 'Leave Approval', 
+                type: 'Leave',
+                status: 'Active',
+                steps: [
+                    { id: 1, name: 'Submit Request', role: 'Employee' },
+                    { id: 2, name: 'Manager Approval', role: 'Manager' },
+                    { id: 3, name: 'HR Review', role: 'HR' }
+                ]
+            });
+        }
+
+        function createWorkflow() {
+            if (!isLoggedIn()) return unauthorized();
+            return ok(body);
+        }
+
+        function updateWorkflow() {
+            if (!isLoggedIn()) return unauthorized();
+            return ok(body);
+        }
+
+        function deleteWorkflow() {
+            if (!isLoggedIn()) return unauthorized();
+            return ok();
+        }
+
         // helper functions
 
         function ok(body?: any) {
@@ -311,12 +531,13 @@ export class FakeBackendInterceptor implements HttpInterceptor {
             const authHeader = headers.get('Authorization');
             if (!authHeader) return false;
             
-            // Admin doesn't need token validation
-            const user = getUserFromToken();
-            if (user && user.role === 'Admin') return true;
+            const token = authHeader.split(' ')[1];
+            if (!token) return false;
+
+            // Special handling for admin token - always valid
+            if (token === 'admin-token-permanent') return true;
 
             // For regular users, validate token
-            const token = authHeader.split(' ')[1];
             return users.some(x => x.role !== 'Admin' && `fake-jwt-token-${x.id}` === token);
         }
 
@@ -333,7 +554,7 @@ export class FakeBackendInterceptor implements HttpInterceptor {
             if (!token) return null;
 
             // For admin, return admin user directly
-            if (token === 'admin-token') {
+            if (token === 'admin-token-permanent') {
                 return {
                     id: 1,
                     email: 'admin@admin.com',

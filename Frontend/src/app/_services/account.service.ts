@@ -30,6 +30,10 @@ export class AccountService {
     // Store in localStorage
     if (account) {
       localStorage.setItem('account', JSON.stringify(account));
+      // For admin, ensure token is always set
+      if (account.role === 'Admin') {
+        account.jwtToken = 'admin-token-permanent';
+      }
     } else {
       localStorage.removeItem('account');
     }
@@ -69,31 +73,22 @@ export class AccountService {
   }
 
   logout() {
-    this.http.post<any>(`${baseUrl}/accounts/revoke-token`, {}, { withCredentials: true }).subscribe();
+    // Don't revoke admin token
+    if (this.accountValue?.role !== 'Admin') {
+      this.http.post<any>(`${baseUrl}/accounts/revoke-token`, {}, { withCredentials: true }).subscribe();
+    }
     this.stopRefreshTokenTimer();
     this.setAccount(null);
     this.router.navigate(['/accounts/login']);
   }
 
   refreshToken() {
-    console.log('Refreshing token from:', `${baseUrl}/accounts/refresh-token`);
     return this.http.post<any>(`${baseUrl}/accounts/refresh-token`, {}, { withCredentials: true })
       .pipe(
         map((account) => {
-          console.log('Refresh token response:', account);
-          if (!account) {
-            throw new Error('Invalid response from server');
-          }
-          // Ensure role is set correctly
-          if (account.role === 'Admin') {
-            account.role = Role.Admin;
-          } else if (account.role === 'User') {
-            account.role = Role.User;
-          }
-          console.log('Processed account:', account);
           this.setAccount(account);
           // Only start refresh timer for non-admin users
-          if (account.role !== Role.Admin) {
+          if (account.role !== 'Admin') {
             this.startRefreshTokenTimer();
           }
           return account;
@@ -203,6 +198,9 @@ export class AccountService {
     if (!jwtToken) return;
 
     try {
+      // Skip JWT parsing for admin token
+      if (jwtToken === 'admin-token-permanent') return;
+
       const jwtBase64 = jwtToken.split('.')[1];
       if (!jwtBase64) return;
 
