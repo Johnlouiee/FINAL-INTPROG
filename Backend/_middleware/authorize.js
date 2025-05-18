@@ -11,11 +11,16 @@ function authorize(roles = []) {
 
   return [
     // Authenticate JWT token and attach user to request object (req.auth)
-    jwt({ secret: process.env.JWT_SECRET, algorithms: ['HS256'], requestProperty: 'auth' }),
+    jwt({ 
+      secret: process.env.JWT_SECRET || 'your-secret-key', 
+      algorithms: ['HS256'], 
+      requestProperty: 'auth',
+      credentialsRequired: true
+    }),
 
     // Debugging: Log token data
     (req, res, next) => {
-      console.log('Decoded User:', req.auth); // Should print valid token payload
+      console.log('Authorization check - User:', req.auth);
       if (!req.auth) {
         return res.status(401).json({ message: 'JWT token missing or invalid' });
       }
@@ -26,12 +31,23 @@ function authorize(roles = []) {
     async (req, res, next) => {
       try {
         console.log('Checking account for:', req.auth.id);
+        console.log('Required roles:', roles);
 
         const account = await db.Account.findByPk(req.auth.id);
         console.log('Account found:', account?.dataValues || 'Not found');
 
-        if (!account || (roles.length && !roles.includes(account.role))) {
-          return res.status(401).json({ message: 'Unauthorized' });
+        if (!account) {
+          console.log('Account not found');
+          return res.status(401).json({ message: 'Account not found' });
+        }
+
+        if (roles.length && !roles.includes(account.role)) {
+          console.log('Role mismatch. User role:', account.role, 'Required roles:', roles);
+          return res.status(403).json({ 
+            message: 'Unauthorized - Insufficient permissions',
+            requiredRoles: roles,
+            userRole: account.role
+          });
         }
 
         req.auth.role = account.role;
@@ -41,14 +57,17 @@ function authorize(roles = []) {
           const refreshTokens = await account.getRefreshTokens();
           req.auth.ownsToken = token => !!refreshTokens.find(x => x.token === token);
         } else {
-          req.auth.ownsToken = () => true; // Default to true if no refresh tokens
+          req.auth.ownsToken = () => true;
         }
 
-        req.user = req.auth; // Ensure `req.user` is available
+        req.user = req.auth;
         next();
       } catch (error) {
         console.error('Authorization error:', error);
-        return res.status(500).json({ message: 'Internal server error during authorization' });
+        return res.status(500).json({ 
+          message: 'Internal server error during authorization',
+          error: error.message 
+        });
       }
     }
   ];

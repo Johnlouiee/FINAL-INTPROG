@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable } from 'rxjs';
-import { map, finalize } from 'rxjs/operators';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { BehaviorSubject, Observable, throwError } from 'rxjs';
+import { map, finalize, catchError } from 'rxjs/operators';
 
 import { environment } from '../../environments/environment';
 import { Account } from '../_models/account';
@@ -30,6 +30,10 @@ export class AccountService {
     // Store in localStorage
     if (account) {
       localStorage.setItem('account', JSON.stringify(account));
+      // For admin, ensure token is always set
+      if (account.role === 'Admin') {
+        account.jwtToken = 'admin-token-permanent';
+      }
     } else {
       localStorage.removeItem('account');
     }
@@ -38,24 +42,41 @@ export class AccountService {
   }
   
   login(email: string, password: string) {
-    return this.http.post<any>(`${baseUrl}/accounts/authenticate`, { email, password }, { withCredentials: true })
-      .pipe(map(account => {
-        console.log('Login response:', account);
-        // Ensure role is set correctly
-        if (account.role === 'Admin') {
-          account.role = Role.Admin;
-        } else if (account.role === 'User') {
-          account.role = Role.User;
-        }
-        console.log('Processed account:', account);
-        this.setAccount(account);
-        this.startRefreshTokenTimer();
-        return account;
-      }));
+    return this.http.post<any>(`${environment.apiUrl}/accounts/authenticate`, { email, password })
+      .pipe(
+        map(response => {
+          // store user details in local storage to keep user logged in between page refreshes
+          localStorage.setItem('user', JSON.stringify(response));
+          this.setAccount(response);
+          
+          // Only start refresh timer for non-admin users
+          if (response.role !== 'Admin') {
+            this.startRefreshTokenTimer();
+          }
+          return response;
+        }),
+        catchError(error => {
+          console.error('Login error:', error);
+          let errorMessage = 'An error occurred during login';
+          
+          if (error.status === 400) {
+            errorMessage = error.error?.message || 'Invalid email or password';
+          } else if (error.error instanceof ErrorEvent) {
+            errorMessage = error.error.message;
+          } else if (error.error && error.error.message) {
+            errorMessage = error.error.message;
+          }
+          
+          return throwError(() => ({ message: errorMessage }));
+        })
+      );
   }
 
   logout() {
-    this.http.post<any>(`${baseUrl}/accounts/revoke-token`, {}, { withCredentials: true }).subscribe();
+    // Don't revoke admin token
+    if (this.accountValue?.role !== 'Admin') {
+      this.http.post<any>(`${baseUrl}/accounts/revoke-token`, {}, { withCredentials: true }).subscribe();
+    }
     this.stopRefreshTokenTimer();
     this.setAccount(null);
     this.router.navigate(['/accounts/login']);
@@ -63,23 +84,52 @@ export class AccountService {
 
   refreshToken() {
     return this.http.post<any>(`${baseUrl}/accounts/refresh-token`, {}, { withCredentials: true })
-      .pipe(map((account) => {
-        console.log('Refresh token response:', account);
-        // Ensure role is set correctly
-        if (account.role === 'Admin') {
-          account.role = Role.Admin;
-        } else if (account.role === 'User') {
-          account.role = Role.User;
-        }
-        console.log('Processed account:', account);
-        this.setAccount(account);
-        this.startRefreshTokenTimer();
-        return account;
-      }));
+      .pipe(
+        map((account) => {
+          this.setAccount(account);
+          // Only start refresh timer for non-admin users
+          if (account.role !== 'Admin') {
+            this.startRefreshTokenTimer();
+          }
+          return account;
+        }),
+        catchError((error: HttpErrorResponse) => {
+          console.error('Refresh token error:', error);
+          let errorMessage = 'An error occurred while refreshing the token';
+          
+          if (error.error instanceof ErrorEvent) {
+            errorMessage = error.error.message;
+          } else {
+            if (error.status === 401) {
+              errorMessage = 'Session expired. Please login again.';
+            } else if (error.error && error.error.message) {
+              errorMessage = error.error.message;
+            }
+          }
+          
+          return throwError(() => ({ message: errorMessage }));
+        })
+      );
   }
 
   register(account: Account) {
-    return this.http.post(`${baseUrl}/accounts/register`, account);
+    return this.http.post(`${baseUrl}/accounts/register`, account)
+      .pipe(
+        catchError((error: HttpErrorResponse) => {
+          console.error('Registration error:', error);
+          let errorMessage = 'An error occurred during registration';
+          
+          if (error.error instanceof ErrorEvent) {
+            errorMessage = error.error.message;
+          } else {
+            if (error.error && error.error.message) {
+              errorMessage = error.error.message;
+            }
+          }
+          
+          return throwError(() => ({ message: errorMessage }));
+        })
+      );
   }
 
   verifyEmail(token: string) {
@@ -130,7 +180,7 @@ export class AccountService {
   }
 
   delete(id: string) {
-    return this.http.delete(`${baseUrl}/accounts/${id}`)
+    return this.http.delete(`${environment.apiUrl}/accounts/${id}`)
       .pipe(finalize(() => {
         if (id === String(this.accountValue?.id)) {
           this.logout();
@@ -141,13 +191,26 @@ export class AccountService {
   private refreshTokenTimeout: any;
 
   private startRefreshTokenTimer() {
-    const jwtToken = this.accountValue?.jwtToken
-      ? JSON.parse(atob(this.accountValue.jwtToken.split('.')[1]))
-      : null;
+    // Skip token refresh for admin users
+    if (this.accountValue?.role === 'Admin') return;
 
-    const expires = new Date(jwtToken.exp * 1000);
-    const timeout = expires.getTime() - Date.now() - (60 * 1000);
-    this.refreshTokenTimeout = setTimeout(() => this.refreshToken().subscribe(), timeout);
+    const jwtToken = this.accountValue?.jwtToken;
+    if (!jwtToken) return;
+
+    try {
+      // Skip JWT parsing for admin token
+      if (jwtToken === 'admin-token-permanent') return;
+
+      const jwtBase64 = jwtToken.split('.')[1];
+      if (!jwtBase64) return;
+
+      const decodedToken = JSON.parse(atob(jwtBase64));
+      const expires = new Date(decodedToken.exp * 1000);
+      const timeout = expires.getTime() - Date.now() - (60 * 1000);
+      this.refreshTokenTimeout = setTimeout(() => this.refreshToken().subscribe(), timeout);
+    } catch (error) {
+      console.error('Error parsing JWT token:', error);
+    }
   }
 
   private stopRefreshTokenTimer() {

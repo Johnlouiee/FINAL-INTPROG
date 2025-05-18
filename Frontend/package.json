@@ -1,12 +1,13 @@
 {
-  "name": "final-intprog-frontend",
+  "name": "angular-signup-verification-boilerplate",
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
-    "start:prod": "ng serve --configuration production --host 0.0.0.0 --port $PORT",
+    "start": "ng serve --open",
     "build": "ng build --configuration production",
+    "lint": "ng lint",
     "watch": "ng build --watch --configuration development",
+    "e2e": "ng e2e",
     "test": "ng test"
   },
   "private": true,
@@ -36,8 +37,5 @@
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
     "typescript": "~5.2.2"
-  },
-  "engines": {
-    "node": ">=18.13.0"
   }
 }
