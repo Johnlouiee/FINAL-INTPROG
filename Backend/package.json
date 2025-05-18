@@ -21,7 +21,8 @@
     "nodemailer": "^7.0.3",
     "rootpath": "^0.1.2",
     "sequelize": "^6.31.0",
-    "swagger-ui-express": "^5.0.1"
+    "swagger-ui-express": "^5.0.1",
+    "yamljs": "^0.3.0"
   },
   "devDependencies": {
     "nodemon": "^2.0.22"
