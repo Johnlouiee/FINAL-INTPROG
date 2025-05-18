@@ -14,19 +14,7 @@ let users: any[] = JSON.parse(localStorage.getItem(usersKey)!) || [
         lastName: 'User',
         role: 'Admin',
         isVerified: true,
-        isActive: true,
-        jwtToken: 'fake-jwt-token-admin'
-    },
-    {
-        id: 2,
-        email: 'user@user.com',
-        password: 'user',
-        firstName: 'Normal',
-        lastName: 'User',
-        role: 'User',
-        isVerified: true,
-        isActive: true,
-        jwtToken: 'fake-jwt-token-user'
+        isActive: true
     }
 ];
 
@@ -92,9 +80,17 @@ export class FakeBackendInterceptor implements HttpInterceptor {
                 return error('Account is deactivated');
             }
 
+            // For admin, don't include JWT token
+            if (user.role === 'Admin') {
+                return ok({
+                    ...basicDetails(user)
+                });
+            }
+
+            // For regular users, include JWT token
             return ok({
                 ...basicDetails(user),
-                jwtToken: user.jwtToken
+                jwtToken: `fake-jwt-token-${user.id}`
             });
         }
 
@@ -103,9 +99,18 @@ export class FakeBackendInterceptor implements HttpInterceptor {
             if (!user) {
                 return unauthorized();
             }
+
+            // For admin, don't include JWT token
+            if (user.role === 'Admin') {
+                return ok({
+                    ...basicDetails(user)
+                });
+            }
+
+            // For regular users, include JWT token
             return ok({
                 ...basicDetails(user),
-                jwtToken: user.jwtToken
+                jwtToken: `fake-jwt-token-${user.id}`
             });
         }
 
@@ -121,10 +126,9 @@ export class FakeBackendInterceptor implements HttpInterceptor {
             }
 
             user.id = users.length ? Math.max(...users.map(x => x.id)) + 1 : 1;
-            user.isVerified = true;
+            user.isVerified = true; // Auto-verify for fake backend
             user.isActive = true;
             user.role = 'User';
-            user.jwtToken = `fake-jwt-token-${user.id}`;
             users.push(user);
             localStorage.setItem(usersKey, JSON.stringify(users));
             return ok();
@@ -208,8 +212,14 @@ export class FakeBackendInterceptor implements HttpInterceptor {
         function isLoggedIn() {
             const authHeader = headers.get('Authorization');
             if (!authHeader) return false;
+            
+            // Admin doesn't need token validation
+            const user = getUserFromToken();
+            if (user && user.role === 'Admin') return true;
+
+            // For regular users, validate token
             const token = authHeader.split(' ')[1];
-            return users.some(x => x.jwtToken === token);
+            return users.some(x => x.role !== 'Admin' && `fake-jwt-token-${x.id}` === token);
         }
 
         function idFromUrl() {
@@ -220,8 +230,17 @@ export class FakeBackendInterceptor implements HttpInterceptor {
         function getUserFromToken() {
             const authHeader = headers.get('Authorization');
             if (!authHeader) return null;
+            
             const token = authHeader.split(' ')[1];
-            return users.find(x => x.jwtToken === token);
+            if (!token) return null;
+
+            // For admin, return admin user
+            if (token === 'Bearer admin') {
+                return users.find(x => x.role === 'Admin');
+            }
+
+            // For regular users, find by token
+            return users.find(x => `fake-jwt-token-${x.id}` === token);
         }
     }
 }

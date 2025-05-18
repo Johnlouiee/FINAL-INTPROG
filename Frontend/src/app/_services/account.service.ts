@@ -51,7 +51,10 @@ export class AccountService {
           }
           console.log('Processed account:', account);
           this.setAccount(account);
-          this.startRefreshTokenTimer();
+          // Only start refresh timer for non-admin users
+          if (account.role !== Role.Admin) {
+            this.startRefreshTokenTimer();
+          }
           return account;
         }),
         catchError(error => {
@@ -82,7 +85,10 @@ export class AccountService {
           }
           console.log('Processed account:', account);
           this.setAccount(account);
-          this.startRefreshTokenTimer();
+          // Only start refresh timer for non-admin users
+          if (account.role !== Role.Admin) {
+            this.startRefreshTokenTimer();
+          }
           return account;
         }),
         catchError(error => {
@@ -155,7 +161,9 @@ export class AccountService {
   private refreshTokenTimeout: any;
 
   private startRefreshTokenTimer() {
-    // parse json object from base64 encoded jwt token
+    // Only start timer for non-admin users
+    if (this.accountValue?.role === Role.Admin) return;
+
     const jwtToken = this.accountValue?.jwtToken;
     if (!jwtToken) return;
 
