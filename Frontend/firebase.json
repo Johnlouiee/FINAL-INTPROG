@@ -1,6 +1,6 @@
 {
   "hosting": {
-    "public": "dist/final-intprog",
+    "public": "dist/final-intprog/browser",
     "ignore": [
       "firebase.json",
       "**/.*",
