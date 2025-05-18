@@ -30,6 +30,7 @@ async function initialize() {
         db.Department = require('../departments/department.model')(sequelize, Sequelize);
         db.Request = require('../requests/request.model')(sequelize, Sequelize);
         db.RequestItem = require('../requests/request-item.model')(sequelize, Sequelize);
+        db.Reservation = require('../reservations/reservation.model')(sequelize, Sequelize);
 
         // Set up associations
         Object.keys(db).forEach(modelName => {

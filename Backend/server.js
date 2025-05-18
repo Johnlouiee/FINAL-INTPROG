@@ -7,6 +7,7 @@ const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
 const errorHandler = require('_middleware/error-handlers');
+const reservationRoutes = require('./reservations');
 
 // Middleware
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -41,6 +42,7 @@ app.use('/employees', require('./employees'));
 app.use('/departments', require('./departments'));
 app.use('/workflows', require('./workflows'));
 app.use('/requests', require('./requests'));
+app.use('/api/reservations', reservationRoutes);
 
 // Swagger docs route
 app.use('/api-docs', require('_helpers/swagger'));
