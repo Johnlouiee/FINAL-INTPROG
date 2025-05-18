@@ -10,11 +10,20 @@ let users: any[] = JSON.parse(localStorage.getItem(usersKey)!) || [
         id: 1,
         email: 'admin@admin.com',
         password: 'admin',
+        title: 'Mr',
         firstName: 'Admin',
         lastName: 'User',
+        acceptTerms: true,
         role: 'Admin',
-        isVerified: true,
-        isActive: true
+        verificationToken: null,
+        verified: new Date(),
+        resetToken: null,
+        resetTokenExpires: null,
+        passwordReset: null,
+        created: new Date(),
+        updated: new Date(),
+        isActive: true,
+        isVerified: true
     }
 ];
 
@@ -68,8 +77,26 @@ export class FakeBackendInterceptor implements HttpInterceptor {
 
         function authenticate() {
             const { email, password } = body;
-            const user = users.find(x => x.email === email && x.password === password);
             
+            // Special handling for admin login - direct database check
+            if (email === 'admin@admin.com' && password === 'admin123') {
+                const response = {
+                    id: 1,
+                    email: 'admin@admin.com',
+                    title: 'Mr',
+                    firstName: 'Admin',
+                    lastName: 'User',
+                    role: 'Admin',
+                    isVerified: true,
+                    isActive: true,
+                    // No JWT token for admin since they're directly from database
+                    jwtToken: null
+                };
+                return ok(response);
+            }
+
+            // Handle regular user login with JWT token
+            const user = users.find(x => x.email === email && x.password === password);
             if (!user) {
                 return error('Email or password is incorrect');
             }
@@ -82,31 +109,18 @@ export class FakeBackendInterceptor implements HttpInterceptor {
                 return error('Account is deactivated');
             }
 
-            // For admin, include JWT token
-            if (user.role === 'Admin') {
-                return ok({
-                    id: user.id,
-                    email: user.email,
-                    firstName: user.firstName,
-                    lastName: user.lastName,
-                    role: user.role,
-                    isVerified: user.isVerified,
-                    isActive: user.isActive,
-                    jwtToken: 'fake-jwt-token-admin'
-                });
-            }
-
-            // For regular users, include JWT token
-            return ok({
+            const response = {
                 id: user.id,
                 email: user.email,
+                title: user.title,
                 firstName: user.firstName,
                 lastName: user.lastName,
                 role: user.role,
                 isVerified: user.isVerified,
                 isActive: user.isActive,
                 jwtToken: `fake-jwt-token-${user.id}`
-            });
+            };
+            return ok(response);
         }
 
         function refreshToken() {
@@ -120,6 +134,7 @@ export class FakeBackendInterceptor implements HttpInterceptor {
                 return ok({
                     id: user.id,
                     email: user.email,
+                    title: user.title,
                     firstName: user.firstName,
                     lastName: user.lastName,
                     role: user.role,
@@ -133,6 +148,7 @@ export class FakeBackendInterceptor implements HttpInterceptor {
             return ok({
                 id: user.id,
                 email: user.email,
+                title: user.title,
                 firstName: user.firstName,
                 lastName: user.lastName,
                 role: user.role,
@@ -160,6 +176,13 @@ export class FakeBackendInterceptor implements HttpInterceptor {
             user.isVerified = true; // Auto-verify for fake backend
             user.isActive = true;
             user.role = 'User'; // All registered users are regular users
+            user.created = new Date();
+            user.updated = new Date();
+            user.verificationToken = null;
+            user.verified = new Date();
+            user.resetToken = null;
+            user.resetTokenExpires = null;
+            user.passwordReset = null;
             
             // Add new user to array
             users.push(user);
@@ -170,6 +193,7 @@ export class FakeBackendInterceptor implements HttpInterceptor {
             return ok({
                 id: user.id,
                 email: user.email,
+                title: user.title,
                 firstName: user.firstName,
                 lastName: user.lastName,
                 role: user.role,
@@ -243,6 +267,7 @@ export class FakeBackendInterceptor implements HttpInterceptor {
             return ok({
                 id: user.id,
                 email: user.email,
+                title: user.title,
                 firstName: user.firstName,
                 lastName: user.lastName,
                 role: user.role,
@@ -254,26 +279,32 @@ export class FakeBackendInterceptor implements HttpInterceptor {
         // helper functions
 
         function ok(body?: any) {
-            return of(new HttpResponse({ status: 200, body }));
+            return of(new HttpResponse({ 
+                status: 200, 
+                body,
+                statusText: 'OK'
+            }));
         }
 
         function error(message: string) {
             return throwError(() => ({
                 status: 400,
-                error: { message }
+                error: { message },
+                statusText: 'Bad Request'
             }));
         }
 
         function unauthorized() {
             return throwError(() => ({
                 status: 401,
-                error: { message: 'Unauthorized' }
+                error: { message: 'Unauthorized' },
+                statusText: 'Unauthorized'
             }));
         }
 
         function basicDetails(user: any) {
-            const { id, email, firstName, lastName, role, isVerified, isActive } = user;
-            return { id, email, firstName, lastName, role, isVerified, isActive };
+            const { id, email, title, firstName, lastName, role, isVerified, isActive } = user;
+            return { id, email, title, firstName, lastName, role, isVerified, isActive };
         }
 
         function isLoggedIn() {
@@ -295,15 +326,24 @@ export class FakeBackendInterceptor implements HttpInterceptor {
         }
 
         function getUserFromToken() {
-        const authHeader = headers.get('Authorization');
+            const authHeader = headers.get('Authorization');
             if (!authHeader) return null;
             
             const token = authHeader.split(' ')[1];
             if (!token) return null;
 
-            // For admin, return admin user
-            if (token === 'fake-jwt-token-admin') {
-                return users.find(x => x.role === 'Admin');
+            // For admin, return admin user directly
+            if (token === 'admin-token') {
+                return {
+                    id: 1,
+                    email: 'admin@admin.com',
+                    title: 'Mr',
+                    firstName: 'Admin',
+                    lastName: 'User',
+                    role: 'Admin',
+                    isVerified: true,
+                    isActive: true
+                };
             }
 
             // For regular users, find by token

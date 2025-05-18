@@ -38,30 +38,29 @@ export class AccountService {
   }
   
   login(email: string, password: string) {
-    console.log('Attempting login to:', `${environment.apiUrl}/accounts/authenticate`);
     return this.http.post<any>(`${environment.apiUrl}/accounts/authenticate`, { email, password })
       .pipe(
         map(response => {
-          console.log('Login response:', response);
-          if (!response) {
-            throw new Error('Invalid response from server');
-          }
-          
-          // store user details and jwt token in local storage to keep user logged in between page refreshes
+          // store user details in local storage to keep user logged in between page refreshes
           localStorage.setItem('user', JSON.stringify(response));
           this.setAccount(response);
+          
+          // Only start refresh timer for non-admin users
+          if (response.role !== 'Admin') {
+            this.startRefreshTokenTimer();
+          }
           return response;
         }),
         catchError(error => {
           console.error('Login error:', error);
           let errorMessage = 'An error occurred during login';
           
-          if (error.error && error.error.message) {
+          if (error.status === 400) {
+            errorMessage = error.error?.message || 'Invalid email or password';
+          } else if (error.error instanceof ErrorEvent) {
             errorMessage = error.error.message;
-          } else if (error.status === 401) {
-            errorMessage = 'Invalid email or password';
-          } else if (error.status === 403) {
-            errorMessage = 'Account is not verified or is deactivated';
+          } else if (error.error && error.error.message) {
+            errorMessage = error.error.message;
           }
           
           return throwError(() => ({ message: errorMessage }));
@@ -197,14 +196,16 @@ export class AccountService {
   private refreshTokenTimeout: any;
 
   private startRefreshTokenTimer() {
-    // Only start timer for non-admin users
-    if (this.accountValue?.role === Role.Admin) return;
+    // Skip token refresh for admin users
+    if (this.accountValue?.role === 'Admin') return;
 
     const jwtToken = this.accountValue?.jwtToken;
     if (!jwtToken) return;
 
     try {
       const jwtBase64 = jwtToken.split('.')[1];
+      if (!jwtBase64) return;
+
       const decodedToken = JSON.parse(atob(jwtBase64));
       const expires = new Date(decodedToken.exp * 1000);
       const timeout = expires.getTime() - Date.now() - (60 * 1000);
