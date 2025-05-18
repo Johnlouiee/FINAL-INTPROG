@@ -1,217 +1,184 @@
 import { Injectable } from '@angular/core';
 import { HttpRequest, HttpResponse, HttpHandler, HttpEvent, HttpInterceptor, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { Observable, of, throwError } from 'rxjs';
-import { delay, materialize, dematerialize, mergeMap } from 'rxjs/operators';
+import { delay, mergeMap, materialize, dematerialize } from 'rxjs/operators';
+
+// array in local storage for registered users
+const usersKey = 'angular-10-jwt-refresh-token-users';
+let users: any[] = JSON.parse(localStorage.getItem(usersKey)!) || [];
 
 @Injectable()
 export class FakeBackendInterceptor implements HttpInterceptor {
-    users = [
-        { id: 1, email: 'admin@admin.com', password: 'admin', role: 'Admin', title: 'Mr', firstName: 'Admin', lastName: 'User', isActive: true },
-        { id: 2, email: 'user@user.com', password: 'user', role: 'User', title: 'Ms', firstName: 'Normal', lastName: 'User', isActive: true }
-    ];
-    employees: any[] = [];
-    departments: any[] = [];
-    workflows: any[] = [];
-    requests: any[] = [];
-
     intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
         const { url, method, headers, body } = request;
 
+        // wrap in delayed observable to simulate server api call
         return of(null)
-            .pipe(mergeMap(() => this.handleRoute(url, method, headers, body, request, next)))
-            .pipe(materialize())
+            .pipe(mergeMap(handleRoute))
+            .pipe(materialize()) // call materialize and dematerialize to ensure delay even if an error is thrown
             .pipe(delay(500))
             .pipe(dematerialize());
-    }
 
-    private handleRoute(url: string, method: string, headers: any, body: any, request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-        // Accounts Routes
-        if (url.endsWith('/accounts/authenticate') && method === 'POST') {
+        function handleRoute() {
+            switch (true) {
+                case url.endsWith('/accounts/authenticate') && method === 'POST':
+                    return authenticate();
+                case url.endsWith('/accounts/refresh-token') && method === 'POST':
+                    return refreshToken();
+                case url.endsWith('/accounts/revoke-token') && method === 'POST':
+                    return revokeToken();
+                case url.endsWith('/accounts/register') && method === 'POST':
+                    return register();
+                case url.endsWith('/accounts/verify-email') && method === 'POST':
+                    return verifyEmail();
+                case url.endsWith('/accounts/forgot-password') && method === 'POST':
+                    return forgotPassword();
+                case url.endsWith('/accounts/validate-reset-token') && method === 'POST':
+                    return validateResetToken();
+                case url.endsWith('/accounts/reset-password') && method === 'POST':
+                    return resetPassword();
+                case url.endsWith('/accounts') && method === 'GET':
+                    return getUsers();
+                case url.match(/\/accounts\/\d+$/) && method === 'GET':
+                    return getUserById();
+                case url.match(/\/accounts\/\d+$/) && method === 'PUT':
+                    return updateUser();
+                case url.match(/\/accounts\/\d+$/) && method === 'DELETE':
+                    return deleteUser();
+                default:
+                    // pass through any requests not handled above
+                    return next.handle(request);
+            }    
+        }
+
+        // route functions
+
+        function authenticate() {
             const { email, password } = body;
-            const user = this.users.find(u => u.email === email && u.password === password);
-            if (!user) return throwError(() => new Error('Invalid credentials'));
-            return of(new HttpResponse({ status: 200, body: { ...user, token: 'fake-jwt-token' } }));
+            const user = users.find(x => x.email === email && x.password === password);
+            if (!user) return error('Email or password is incorrect');
+            return ok({
+                ...basicDetails(user),
+                jwtToken: 'fake-jwt-token'
+            })
         }
 
-        if (url.endsWith('/accounts') && method === 'GET') {
-            // Return accounts with expected properties for the frontend
-            const accounts = this.users.map(u => ({
-                id: u.id,
-                title: u.title || '',
-                firstName: u.firstName || (u.email === 'admin@admin.com' ? 'Admin' : 'User'),
-                lastName: u.lastName || '',
-                email: u.email,
-                role: u.role,
-                isActive: u.isActive !== false // default to true if not set
-            }));
-            return this.authorize(headers, 'Admin', () => of(new HttpResponse({ status: 200, body: accounts })));
+        function refreshToken() {
+            return ok({
+                ...basicDetails(getUserFromToken()),
+                jwtToken: 'fake-jwt-token'
+            })
         }
 
-        if (url.match(/\/accounts\/\d+\/deactivate$/) && method === 'PUT') {
-            return this.authorize(headers, 'Admin', () => {
-                const id = parseInt(url.split('/')[url.split('/').length - 2]);
-                const user = this.users.find(u => u.id === id);
-                if (!user) return throwError(() => new Error('Account not found'));
-                user.isActive = false;
-                return of(new HttpResponse({ status: 200, body: { message: 'Account deactivated' } }));
-            });
-        }
-        if (url.match(/\/accounts\/\d+\/activate$/) && method === 'PUT') {
-            return this.authorize(headers, 'Admin', () => {
-                const id = parseInt(url.split('/')[url.split('/').length - 2]);
-                const user = this.users.find(u => u.id === id);
-                if (!user) return throwError(() => new Error('Account not found'));
-                user.isActive = true;
-                return of(new HttpResponse({ status: 200, body: { message: 'Account activated' } }));
-            });
+        function revokeToken() {
+            return ok();
         }
 
-        // Employees Routes
-        if (url.endsWith('/employees') && method === 'GET') {
-            return this.authorize(headers, null, () => of(new HttpResponse({ status: 200, body: this.employees })));
+        function register() {
+            const user = body
+
+            if (users.find(x => x.email === user.email)) {
+                return error('Email "' + user.email + '" is already registered')
+            }
+
+            user.id = users.length ? Math.max(...users.map(x => x.id)) + 1 : 1;
+            users.push(user);
+            localStorage.setItem(usersKey, JSON.stringify(users));
+            return ok();
         }
 
-        if (url.endsWith('/employees') && method === 'POST') {
-            return this.authorize(headers, 'Admin', () => {
-                const employee = { id: this.employees.length + 1, ...body };
-                this.employees.push(employee);
-                return of(new HttpResponse({ status: 201, body: employee }));
-            });
+        function verifyEmail() {
+            return ok();
         }
 
-        if (url.match(/\/employees\/\d+$/) && method === 'GET') {
-            const id = parseInt(url.split('/').pop()!);
-            const employee = this.employees.find(e => e.id === id);
-            return this.authorize(headers, null, () => employee ? of(new HttpResponse({ status: 200, body: employee })) : throwError(() => new Error('Employee not found')));
+        function forgotPassword() {
+            return ok();
         }
 
-        if (url.match(/\/employees\/\d+$/) && method === 'PUT') {
-            return this.authorize(headers, 'Admin', () => {
-                const id = parseInt(url.split('/').pop()!);
-                const employeeIndex = this.employees.findIndex(e => e.id === id);
-                if (employeeIndex === -1) return throwError(() => new Error('Employee not found'));
-                this.employees[employeeIndex] = { id, ...body };
-                return of(new HttpResponse({ status: 200, body: this.employees[employeeIndex] }));
-            });
+        function validateResetToken() {
+            return ok();
         }
 
-        if (url.match(/\/employees\/\d+$/) && method === 'DELETE') {
-            return this.authorize(headers, 'Admin', () => {
-                const id = parseInt(url.split('/').pop()!);
-                this.employees = this.employees.filter(e => e.id !== id);
-                return of(new HttpResponse({ status: 200, body: { message: 'Employee deleted' } }));
-            });
+        function resetPassword() {
+            return ok();
         }
 
-        if (url.match(/\/employees\/\d+\/transfer$/) && method === 'POST') {
-            return this.authorize(headers, 'Admin', () => {
-                const id = parseInt(url.split('/')[url.split('/').length - 2]);
-                const employee = this.employees.find(e => e.id === id);
-                if (!employee) return throwError(() => new Error('Employee not found'));
-                employee.departmentId = body.departmentId;
-                this.workflows.push({ id: this.workflows.length + 1, employeeId: id, type: 'Transfer', details: body, status: 'Pending' });
-                return of(new HttpResponse({ status: 200, body: { message: 'Employee transferred' } }));
-            });
+        function getUsers() {
+            if (!isLoggedIn()) return unauthorized();
+            return ok(users.map(x => basicDetails(x)));
         }
 
-        // Departments Routes
-        if (url.endsWith('/departments') && method === 'GET') {
-            return this.authorize(headers, null, () => of(new HttpResponse({ status: 200, body: this.departments })));
+        function getUserById() {
+            if (!isLoggedIn()) return unauthorized();
+
+            const user = users.find(x => x.id === idFromUrl());
+            return ok(basicDetails(user));
         }
 
-        if (url.endsWith('/departments') && method === 'POST') {
-            return this.authorize(headers, 'Admin', () => {
-                const department = { id: this.departments.length + 1, ...body, employeeCount: 0 };
-                this.departments.push(department);
-                return of(new HttpResponse({ status: 201, body: department }));
-            });
+        function updateUser() {
+            if (!isLoggedIn()) return unauthorized();
+
+            let params = body;
+            let user = users.find(x => x.id === idFromUrl());
+
+            // only update password if entered
+            if (!params.password) {
+                delete params.password;
+            }
+
+            // update and save user
+            Object.assign(user, params);
+            localStorage.setItem(usersKey, JSON.stringify(users));
+
+            return ok();
         }
 
-        if (url.match(/\/departments\/\d+$/) && method === 'PUT') {
-            return this.authorize(headers, 'Admin', () => {
-                const id = parseInt(url.split('/').pop()!);
-                const deptIndex = this.departments.findIndex(d => d.id === id);
-                if (deptIndex === -1) return throwError(() => new Error('Department not found'));
-                this.departments[deptIndex] = { id, ...body, employeeCount: this.departments[deptIndex].employeeCount };
-                return of(new HttpResponse({ status: 200, body: this.departments[deptIndex] }));
-            });
+        function deleteUser() {
+            if (!isLoggedIn()) return unauthorized();
+
+            users = users.filter(x => x.id !== idFromUrl());
+            localStorage.setItem(usersKey, JSON.stringify(users));
+            return ok();
         }
 
-        if (url.match(/\/departments\/\d+$/) && method === 'DELETE') {
-            return this.authorize(headers, 'Admin', () => {
-                const id = parseInt(url.split('/').pop()!);
-                this.departments = this.departments.filter(d => d.id !== id);
-                return of(new HttpResponse({ status: 200, body: { message: 'Department deleted' } }));
-            });
+        // helper functions
+
+        function ok(body?: any) {
+            return of(new HttpResponse({ status: 200, body }))
         }
 
-        // Workflows Routes
-        if (url.match(/\/workflows\/employee\/\d+$/) && method === 'GET') {
-            return this.authorize(headers, null, () => {
-                const employeeId = parseInt(url.split('/').pop()!);
-                const workflows = this.workflows.filter(w => w.employeeId === employeeId);
-                return of(new HttpResponse({ status: 200, body: workflows }));
-            });
+        function error(message: string) {
+            return throwError({ error: { message } });
         }
 
-        if (url.endsWith('/workflows') && method === 'POST') {
-            return this.authorize(headers, 'Admin', () => {
-                const workflow = { id: this.workflows.length + 1, ...body };
-                this.workflows.push(workflow);
-                return of(new HttpResponse({ status: 201, body: workflow }));
-            });
+        function unauthorized() {
+            return throwError({ status: 401, error: { message: 'Unauthorized' } });
         }
 
-        // Requests Routes
-        if (url.endsWith('/requests') && method === 'GET') {
-            return this.authorize(headers, 'Admin', () => of(new HttpResponse({ status: 200, body: this.requests })));
+        function basicDetails(user: any) {
+            const { id, email, firstName, lastName, role } = user;
+            return { id, email, firstName, lastName, role };
         }
 
-        if (url.endsWith('/requests') && method === 'POST') {
-            return this.authorize(headers, null, () => {
-                const request = { id: this.requests.length + 1, employeeId: this.getUser(headers)?.id, ...body };
-                this.requests.push(request);
-                return of(new HttpResponse({ status: 201, body: request }));
-            });
+        function isLoggedIn() {
+            return headers.get('Authorization') === 'Bearer fake-jwt-token';
         }
 
-        if (url.match(/\/requests\/\d+$/) && method === 'PUT') {
-            return this.authorize(headers, 'Admin', () => {
-                const id = parseInt(url.split('/').pop()!);
-                const reqIndex = this.requests.findIndex(r => r.id === id);
-                if (reqIndex === -1) return throwError(() => new Error('Request not found'));
-                this.requests[reqIndex] = { id, ...body };
-                return of(new HttpResponse({ status: 200, body: this.requests[reqIndex] }));
-            });
+        function idFromUrl() {
+            const urlParts = url.split('/');
+            return parseInt(urlParts[urlParts.length - 1]);
         }
 
-        if (url.match(/\/requests\/\d+$/) && method === 'DELETE') {
-            return this.authorize(headers, 'Admin', () => {
-                const id = parseInt(url.split('/').pop()!);
-                this.requests = this.requests.filter(r => r.id !== id);
-                return of(new HttpResponse({ status: 200, body: { message: 'Request deleted' } }));
-            });
+        function getUserFromToken() {
+            const token = headers.get('Authorization')?.split(' ')[1];
+            const user = users.find(x => x.jwtToken === token);
+            return user;
         }
-
-        return next.handle(request);
-    }
-
-    private authorize(headers: any, requiredRole: string | null, success: () => Observable<HttpEvent<any>>): Observable<HttpEvent<any>> {
-        const user = this.getUser(headers);
-        if (!user) return throwError(() => new Error('Unauthorized'));
-        if (requiredRole && user.role !== requiredRole) return throwError(() => new Error('Forbidden'));
-        return success();
-    }
-
-    private getUser(headers: any) {
-        const authHeader = headers.get('Authorization');
-        if (!authHeader || authHeader !== 'Bearer fake-jwt-token') return null;
-        // For demo, always return the first user (admin) if the token is present
-        return this.users[0];
     }
 }
 
 export const fakeBackendProvider = {
+    // use fake backend in place of Http service for backend-less development
     provide: HTTP_INTERCEPTORS,
     useClass: FakeBackendInterceptor,
     multi: true
