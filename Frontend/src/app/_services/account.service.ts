@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { BehaviorSubject, Observable, throwError } from 'rxjs';
 import { map, finalize, catchError } from 'rxjs/operators';
 
@@ -43,6 +43,9 @@ export class AccountService {
       .pipe(
         map(account => {
           console.log('Login response:', account);
+          if (!account) {
+            throw new Error('Invalid response from server');
+          }
           // Ensure role is set correctly
           if (account.role === 'Admin') {
             account.role = Role.Admin;
@@ -57,9 +60,25 @@ export class AccountService {
           }
           return account;
         }),
-        catchError(error => {
+        catchError((error: HttpErrorResponse) => {
           console.error('Login error:', error);
-          return throwError(() => error);
+          let errorMessage = 'An error occurred during login';
+          
+          if (error.error instanceof ErrorEvent) {
+            // Client-side error
+            errorMessage = error.error.message;
+          } else {
+            // Server-side error
+            if (error.status === 401) {
+              errorMessage = 'Invalid email or password';
+            } else if (error.status === 403) {
+              errorMessage = 'Account is not verified or is deactivated';
+            } else if (error.error && error.error.message) {
+              errorMessage = error.error.message;
+            }
+          }
+          
+          return throwError(() => ({ message: errorMessage }));
         })
       );
   }
@@ -77,6 +96,9 @@ export class AccountService {
       .pipe(
         map((account) => {
           console.log('Refresh token response:', account);
+          if (!account) {
+            throw new Error('Invalid response from server');
+          }
           // Ensure role is set correctly
           if (account.role === 'Admin') {
             account.role = Role.Admin;
@@ -91,15 +113,43 @@ export class AccountService {
           }
           return account;
         }),
-        catchError(error => {
+        catchError((error: HttpErrorResponse) => {
           console.error('Refresh token error:', error);
-          return throwError(() => error);
+          let errorMessage = 'An error occurred while refreshing the token';
+          
+          if (error.error instanceof ErrorEvent) {
+            errorMessage = error.error.message;
+          } else {
+            if (error.status === 401) {
+              errorMessage = 'Session expired. Please login again.';
+            } else if (error.error && error.error.message) {
+              errorMessage = error.error.message;
+            }
+          }
+          
+          return throwError(() => ({ message: errorMessage }));
         })
       );
   }
 
   register(account: Account) {
-    return this.http.post(`${baseUrl}/accounts/register`, account);
+    return this.http.post(`${baseUrl}/accounts/register`, account)
+      .pipe(
+        catchError((error: HttpErrorResponse) => {
+          console.error('Registration error:', error);
+          let errorMessage = 'An error occurred during registration';
+          
+          if (error.error instanceof ErrorEvent) {
+            errorMessage = error.error.message;
+          } else {
+            if (error.error && error.error.message) {
+              errorMessage = error.error.message;
+            }
+          }
+          
+          return throwError(() => ({ message: errorMessage }));
+        })
+      );
   }
 
   verifyEmail(token: string) {

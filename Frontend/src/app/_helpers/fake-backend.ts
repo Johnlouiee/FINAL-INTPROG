@@ -83,13 +83,25 @@ export class FakeBackendInterceptor implements HttpInterceptor {
             // For admin, don't include JWT token
             if (user.role === 'Admin') {
                 return ok({
-                    ...basicDetails(user)
+                    id: user.id,
+                    email: user.email,
+                    firstName: user.firstName,
+                    lastName: user.lastName,
+                    role: user.role,
+                    isVerified: user.isVerified,
+                    isActive: user.isActive
                 });
             }
 
             // For regular users, include JWT token
             return ok({
-                ...basicDetails(user),
+                id: user.id,
+                email: user.email,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                role: user.role,
+                isVerified: user.isVerified,
+                isActive: user.isActive,
                 jwtToken: `fake-jwt-token-${user.id}`
             });
         }
@@ -103,13 +115,25 @@ export class FakeBackendInterceptor implements HttpInterceptor {
             // For admin, don't include JWT token
             if (user.role === 'Admin') {
                 return ok({
-                    ...basicDetails(user)
+                    id: user.id,
+                    email: user.email,
+                    firstName: user.firstName,
+                    lastName: user.lastName,
+                    role: user.role,
+                    isVerified: user.isVerified,
+                    isActive: user.isActive
                 });
             }
 
             // For regular users, include JWT token
             return ok({
-                ...basicDetails(user),
+                id: user.id,
+                email: user.email,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                role: user.role,
+                isVerified: user.isVerified,
+                isActive: user.isActive,
                 jwtToken: `fake-jwt-token-${user.id}`
             });
         }
@@ -197,7 +221,7 @@ export class FakeBackendInterceptor implements HttpInterceptor {
         }
 
         function error(message: string) {
-            return throwError(() => ({ error: { message } }));
+            return throwError(() => ({ status: 400, error: { message } }));
         }
 
         function unauthorized() {
@@ -228,7 +252,7 @@ export class FakeBackendInterceptor implements HttpInterceptor {
         }
 
         function getUserFromToken() {
-        const authHeader = headers.get('Authorization');
+            const authHeader = headers.get('Authorization');
             if (!authHeader) return null;
             
             const token = authHeader.split(' ')[1];
