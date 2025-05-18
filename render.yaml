@@ -26,19 +26,35 @@ services:
 
   # Frontend Service
   - type: web
-    name: final-intprog-web
-    env: node
-    region: oregon
-    plan: free
-    buildCommand: cd Frontend && npm install && npm run build
-    startCommand: cd Frontend && npm run start:prod
-    publishDir: Frontend/dist
+    name: final-intprog-frontend
+    env: static
+    buildCommand: |
+      cd Frontend
+      npm install
+      npm install -g @angular/cli@17.3.10
+      export PATH=$PATH:$(npm config get prefix)/bin
+      ng build --configuration production --base-href=/ --output-path=dist/final-intprog
+    staticPublishPath: Frontend/dist/final-intprog
     envVars:
-      - key: NODE_ENV
-        value: production
       - key: API_URL
-        value: https://final-intprog-api.onrender.com
-      - key: PORT
-        value: 10000
+        value: https://final-intprog-k6j8.onrender.com
+      - key: ENVIRONMENT
+        value: production
       - key: NODE_VERSION
-        value: 18.13.0 
+        value: 18.x
+      - key: NODE_OPTIONS
+        value: --max_old_space_size=4096
+    headers:
+      - path: /*
+        name: Cache-Control
+        value: no-cache, no-store, must-revalidate
+      - path: /*
+        name: Pragma
+        value: no-cache
+      - path: /*
+        name: Expires
+        value: "0"
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
