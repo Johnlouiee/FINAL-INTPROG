@@ -38,44 +38,30 @@ export class AccountService {
   }
   
   login(email: string, password: string) {
-    console.log('Attempting login to:', `${baseUrl}/accounts/authenticate`);
-    return this.http.post<any>(`${baseUrl}/accounts/authenticate`, { email, password }, { withCredentials: true })
+    console.log('Attempting login to:', `${environment.apiUrl}/accounts/authenticate`);
+    return this.http.post<any>(`${environment.apiUrl}/accounts/authenticate`, { email, password })
       .pipe(
-        map(account => {
-          console.log('Login response:', account);
-          if (!account) {
+        map(response => {
+          console.log('Login response:', response);
+          if (!response) {
             throw new Error('Invalid response from server');
           }
-          // Ensure role is set correctly
-          if (account.role === 'Admin') {
-            account.role = Role.Admin;
-          } else if (account.role === 'User') {
-            account.role = Role.User;
-          }
-          console.log('Processed account:', account);
-          this.setAccount(account);
-          // Only start refresh timer for non-admin users
-          if (account.role !== Role.Admin) {
-            this.startRefreshTokenTimer();
-          }
-          return account;
+          
+          // store user details and jwt token in local storage to keep user logged in between page refreshes
+          localStorage.setItem('user', JSON.stringify(response));
+          this.setAccount(response);
+          return response;
         }),
-        catchError((error: HttpErrorResponse) => {
+        catchError(error => {
           console.error('Login error:', error);
           let errorMessage = 'An error occurred during login';
           
-          if (error.error instanceof ErrorEvent) {
-            // Client-side error
+          if (error.error && error.error.message) {
             errorMessage = error.error.message;
-          } else {
-            // Server-side error
-            if (error.status === 401) {
-              errorMessage = 'Invalid email or password';
-            } else if (error.status === 403) {
-              errorMessage = 'Account is not verified or is deactivated';
-            } else if (error.error && error.error.message) {
-              errorMessage = error.error.message;
-            }
+          } else if (error.status === 401) {
+            errorMessage = 'Invalid email or password';
+          } else if (error.status === 403) {
+            errorMessage = 'Account is not verified or is deactivated';
           }
           
           return throwError(() => ({ message: errorMessage }));
@@ -200,7 +186,7 @@ export class AccountService {
   }
 
   delete(id: string) {
-    return this.http.delete(`${baseUrl}/accounts/${id}`)
+    return this.http.delete(`${environment.apiUrl}/accounts/${id}`)
       .pipe(finalize(() => {
         if (id === String(this.accountValue?.id)) {
           this.logout();

@@ -80,7 +80,7 @@ export class FakeBackendInterceptor implements HttpInterceptor {
                 return error('Account is deactivated');
             }
 
-            // For admin, don't include JWT token
+            // For admin, include JWT token
             if (user.role === 'Admin') {
                 return ok({
                     id: user.id,
@@ -89,7 +89,8 @@ export class FakeBackendInterceptor implements HttpInterceptor {
                     lastName: user.lastName,
                     role: user.role,
                     isVerified: user.isVerified,
-                    isActive: user.isActive
+                    isActive: user.isActive,
+                    jwtToken: 'fake-jwt-token-admin'
                 });
             }
 
@@ -112,7 +113,7 @@ export class FakeBackendInterceptor implements HttpInterceptor {
                 return unauthorized();
             }
 
-            // For admin, don't include JWT token
+            // For admin, include JWT token
             if (user.role === 'Admin') {
                 return ok({
                     id: user.id,
@@ -121,7 +122,8 @@ export class FakeBackendInterceptor implements HttpInterceptor {
                     lastName: user.lastName,
                     role: user.role,
                     isVerified: user.isVerified,
-                    isActive: user.isActive
+                    isActive: user.isActive,
+                    jwtToken: 'fake-jwt-token-admin'
                 });
             }
 
@@ -149,13 +151,29 @@ export class FakeBackendInterceptor implements HttpInterceptor {
                 return error('Email "' + user.email + '" is already registered');
             }
 
+            // Generate new user id
             user.id = users.length ? Math.max(...users.map(x => x.id)) + 1 : 1;
+            
+            // Set default values for new users
             user.isVerified = true; // Auto-verify for fake backend
             user.isActive = true;
-            user.role = 'User';
+            user.role = 'User'; // All registered users are regular users
+            
+            // Add new user to array
             users.push(user);
+            
+            // Save updated users array to local storage
             localStorage.setItem(usersKey, JSON.stringify(users));
-            return ok();
+            
+            return ok({
+                id: user.id,
+                email: user.email,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                role: user.role,
+                isVerified: user.isVerified,
+                isActive: user.isActive
+            });
         }
 
         function verifyEmail() {
@@ -221,11 +239,17 @@ export class FakeBackendInterceptor implements HttpInterceptor {
         }
 
         function error(message: string) {
-            return throwError(() => ({ status: 400, error: { message } }));
+            return throwError(() => ({
+                status: 400,
+                error: { message }
+            }));
         }
 
         function unauthorized() {
-            return throwError(() => ({ status: 401, error: { message: 'Unauthorized' } }));
+            return throwError(() => ({
+                status: 401,
+                error: { message: 'Unauthorized' }
+            }));
         }
 
         function basicDetails(user: any) {
@@ -252,14 +276,14 @@ export class FakeBackendInterceptor implements HttpInterceptor {
         }
 
         function getUserFromToken() {
-            const authHeader = headers.get('Authorization');
+        const authHeader = headers.get('Authorization');
             if (!authHeader) return null;
             
             const token = authHeader.split(' ')[1];
             if (!token) return null;
 
             // For admin, return admin user
-            if (token === 'Bearer admin') {
+            if (token === 'fake-jwt-token-admin') {
                 return users.find(x => x.role === 'Admin');
             }
 
