@@ -1,39 +1,46 @@
 <div class="card">
-  <div class="card-header">{{id ? 'Edit' : 'Add'}} Request</div>
+  <div class="card-header">ADD REQUEST</div>
   <div class="card-body">
-    <div class="alert alert-danger" *ngIf="errorMessage">{{errorMessage}}</div>
-    
     <div class="mb-3">
       <label class="form-label">Type</label>
-      <select class="form-select" [(ngModel)]="request.type" [class.is-invalid]="errorMessage && !request.type">
-        <option value="">Select Type</option>
+      <select class="form-select" [(ngModel)]="request.type">
         <option value="Equipment">Equipment</option>
         <option value="Leave">Leave</option>
-        <option value="Resources">Resources</option>
+        <option value="Resource">Resource</option>
       </select>
     </div>
 
     <div class="mb-3">
       <label class="form-label">Employee</label>
-      <select class="form-select" [(ngModel)]="request.employeeId" [class.is-invalid]="errorMessage && !request.employeeId">
-        <option value="">Select Employee</option>
-        <option *ngFor="let emp of employees" [value]="emp.id">
-          {{ emp.firstName }} {{ emp.lastName }}
+      <select class="form-select" [(ngModel)]="request.employeeId" [disabled]="loadingEmployees">
+        <option value="" disabled selected>Select Employee</option>
+        <option *ngFor="let emp of activeEmployees" [value]="emp.id">
+          {{ emp.employeeId }}
         </option>
       </select>
+      <div *ngIf="loadingEmployees" class="text-muted mt-1">Loading employees...</div>
+      <div *ngIf="errorMessage" class="text-danger mt-1">{{ errorMessage }}</div>
     </div>
 
-    <div class="mb-3">
-      <label class="form-label">Description</label>
-      <textarea class="form-control" [(ngModel)]="request.description" rows="3" placeholder="Enter request description"></textarea>
+    <button class="btn btn-secondary mb-3" (click)="addItem()">Add Item</button>
+
+    <div *ngFor="let item of request.requestItems; let i = index" class="card mb-2">
+      <div class="card-body row">
+        <div class="col-md-5">
+          <input type="text" class="form-control" placeholder="Item Name" [(ngModel)]="item.name">
+        </div>
+        <div class="col-md-5">
+          <input type="number" class="form-control" placeholder="Quantity" [(ngModel)]="item.quantity" min="1">
+        </div>
+        <div class="col-md-2">
+          <button class="btn btn-danger w-100" (click)="removeItem(i)">Remove</button>
+        </div>
+      </div>
     </div>
 
-    <div class="text-center">
-      <button class="btn btn-primary me-2" (click)="save()" [disabled]="loading">
-        <span *ngIf="loading" class="spinner-border spinner-border-sm me-1"></span>
-        Save
-      </button>
-      <button class="btn btn-secondary" (click)="cancel()" [disabled]="loading">Cancel</button>
+    <div class="text-center mt-3">
+      <button class="btn btn-primary me-2" (click)="save()">Save</button>
+      <button class="btn btn-secondary" (click)="cancel()">Cancel</button>
     </div>
   </div>
 </div>
