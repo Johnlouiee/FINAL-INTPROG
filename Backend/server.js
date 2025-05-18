@@ -17,7 +17,7 @@ app.use(cookieParser());
 // Allow CORS requests from specified origins
 const allowedOrigins = process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(',') : [
   'http://localhost:4200',
-  'https://my-final-louie02.web.app',
+  'https://final-intprog-64aac.web.app',
   'https://final-intprog-frontend.onrender.com'
 ];
 app.use(cors({
