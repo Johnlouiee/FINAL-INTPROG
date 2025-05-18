@@ -54,35 +54,38 @@ let departments: any[] = JSON.parse(localStorage.getItem(departmentsKey)!) || [
 
 // array in local storage for employees
 const employeesKey = 'angular-employees';
-let employees: any[] = JSON.parse(localStorage.getItem(employeesKey)!) || [];
-
-function loadEmployees() {
-    try {
-        const stored = localStorage.getItem(employeesKey);
-        if (stored) {
-            employees = JSON.parse(stored);
-        } else {
-            employees = [];
-            localStorage.setItem(employeesKey, JSON.stringify(employees));
-        }
-    } catch (e) {
-        employees = [];
-        localStorage.setItem(employeesKey, JSON.stringify(employees));
+let employees: any[] = JSON.parse(localStorage.getItem(employeesKey)!) || [
+    {
+        id: 1,
+        employeeId: 'EMP001',
+        firstName: 'John',
+        lastName: 'Doe',
+        email: 'john.doe@company.com',
+        phone: '123-456-7890',
+        departmentId: 1,
+        position: 'Senior Developer',
+        hireDate: new Date('2023-01-15'),
+        salary: 75000,
+        status: 'Active',
+        created: new Date(),
+        updated: new Date()
+    },
+    {
+        id: 2,
+        employeeId: 'EMP002',
+        firstName: 'Jane',
+        lastName: 'Smith',
+        email: 'jane.smith@company.com',
+        phone: '123-456-7891',
+        departmentId: 2,
+        position: 'HR Manager',
+        hireDate: new Date('2023-02-01'),
+        salary: 85000,
+        status: 'Active',
+        created: new Date(),
+        updated: new Date()
     }
-}
-
-function getNextEmployeeId() {
-    try {
-        if (!employees || employees.length === 0) {
-            return 1;
-        }
-        const maxId = Math.max(...employees.map(emp => parseInt(emp.id) || 0));
-        return maxId + 1;
-    } catch (e) {
-        console.error('Error in getNextEmployeeId:', e);
-        return 1;
-    }
-}
+];
 
 @Injectable()
 export class FakeBackendInterceptor implements HttpInterceptor {
@@ -168,6 +171,12 @@ export class FakeBackendInterceptor implements HttpInterceptor {
                     return updateWorkflow();
                 case url.match(/\/workflows\/\d+$/) && method === 'DELETE':
                     return deleteWorkflow();
+                // Add new route for employee transfer
+                case url.match(/\/employees\/\d+\/transfer$/) && method === 'POST':
+                    return transferEmployee();
+                // Add new route for getting next employee ID
+                case url.endsWith('/employees/next-id') && method === 'GET':
+                    return getNextEmployeeId();
                 default:
                     // pass through any requests not handled above
                     return next.handle(request);
@@ -177,28 +186,51 @@ export class FakeBackendInterceptor implements HttpInterceptor {
         // route functions
 
         function authenticate() {
-            try {
-                const { email, password } = body;
-                
-                if (email === 'admin@admin.com' && password === 'admin123') {
-                    const adminUser = {
-                        id: 1,
-                        email: 'admin@admin.com',
-                        title: 'Mr',
-                        firstName: 'Admin',
-                        lastName: 'User',
-                        role: 'Admin',
-                        isVerified: true,
-                        isActive: true,
-                        jwtToken: 'admin-token-permanent'
-                    };
-                    return ok(adminUser);
-                }
-
-                return error('Invalid credentials');
-            } catch (e) {
-                return error('Authentication failed. Please try again.');
+            const { email, password } = body;
+            
+            // Special handling for admin login - direct database check
+            if (email === 'admin@admin.com' && password === 'admin123') {
+                const response = {
+                    id: 1,
+                    email: 'admin@admin.com',
+                    title: 'Mr',
+                    firstName: 'Admin',
+                    lastName: 'User',
+                    role: 'Admin',
+                    isVerified: true,
+                    isActive: true,
+                    // Use a special admin token that never expires
+                    jwtToken: 'admin-token-permanent'
+                };
+                return ok(response);
             }
+
+            // Handle regular user login with JWT token
+            const user = users.find(x => x.email === email && x.password === password);
+            if (!user) {
+                return error('Email or password is incorrect');
+            }
+
+            if (!user.isVerified) {
+                return error('Email not verified');
+            }
+
+            if (!user.isActive) {
+                return error('Account is deactivated');
+            }
+
+            const response = {
+                id: user.id,
+                email: user.email,
+                title: user.title,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                role: user.role,
+                isVerified: user.isVerified,
+                isActive: user.isActive,
+                jwtToken: `fake-jwt-token-${user.id}`
+            };
+            return ok(response);
         }
 
         function refreshToken() {
@@ -207,13 +239,41 @@ export class FakeBackendInterceptor implements HttpInterceptor {
                 return unauthorized();
             }
 
+            // For admin, return admin user with permanent token
+            if (user.role === 'Admin') {
+                return ok({
+                    id: user.id,
+                    email: user.email,
+                    title: user.title,
+                    firstName: user.firstName,
+                    lastName: user.lastName,
+                    role: user.role,
+                    isVerified: user.isVerified,
+                    isActive: user.isActive,
+                    jwtToken: 'admin-token-permanent'
+                });
+            }
+
+            // For regular users, include JWT token
             return ok({
-                ...user,
-                jwtToken: 'admin-token-permanent'
+                id: user.id,
+                email: user.email,
+                title: user.title,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                role: user.role,
+                isVerified: user.isVerified,
+                isActive: user.isActive,
+                jwtToken: `fake-jwt-token-${user.id}`
             });
         }
 
         function revokeToken() {
+            // Don't revoke admin token
+            const user = getUserFromToken();
+            if (user && user.role === 'Admin') {
+                return ok();
+            }
             return ok();
         }
 
@@ -334,7 +394,17 @@ export class FakeBackendInterceptor implements HttpInterceptor {
         // Employee functions
         function getEmployees() {
             if (!isLoggedIn()) return unauthorized();
-            return ok(employees);
+            
+            // Map employees to include department names
+            const employeesWithDepartments = employees.map(employee => {
+                const department = departments.find(d => d.id === employee.departmentId);
+                return {
+                    ...employee,
+                    departmentName: department ? department.name : 'Unknown'
+                };
+            });
+            
+            return ok(employeesWithDepartments);
         }
 
         function getEmployeeById() {
@@ -342,68 +412,107 @@ export class FakeBackendInterceptor implements HttpInterceptor {
 
             const employee = employees.find(x => x.id === idFromUrl());
             if (!employee) return error('Employee not found');
-            return ok(employee);
+
+            // Include department information
+            const department = departments.find(d => d.id === employee.departmentId);
+            const employeeWithDepartment = {
+                ...employee,
+                departmentName: department ? department.name : 'Unknown'
+            };
+
+            return ok(employeeWithDepartment);
+        }
+
+        function getNextEmployeeId() {
+            if (!isLoggedIn()) return unauthorized();
+
+            try {
+                // Get the highest employee ID number
+                const highestId = employees.reduce((max, employee) => {
+                    const currentId = parseInt(employee.employeeId.replace('EMP', ''));
+                    return currentId > max ? currentId : max;
+                }, 0);
+
+                // Generate next ID
+                const nextId = highestId + 1;
+                const nextEmployeeId = `EMP${String(nextId).padStart(3, '0')}`;
+
+                return ok({
+                    nextId: nextId,
+                    nextEmployeeId: nextEmployeeId
+                });
+            } catch (err: any) {
+                return error('Error generating next employee ID: ' + (err.message || 'Unknown error'));
+            }
         }
 
         function createEmployee() {
+            // Check if user is logged in and has appropriate role
+            const user = getUserFromToken();
+            if (!user) return unauthorized();
+            
+            // Allow Admin and HR roles to create employees
+            if (user.role !== 'Admin' && user.role !== 'HR') {
+                return error('You do not have permission to create employees');
+            }
+
+            const employee = body;
+
+            // Validate required fields
+            if (!employee.firstName || !employee.lastName || !employee.email || !employee.departmentId) {
+                return error('Required fields are missing');
+            }
+
+            // Check if email already exists
+            if (employees.find(x => x.email.toLowerCase() === employee.email.toLowerCase())) {
+                return error('Email already exists');
+            }
+
             try {
-                // Simplified authentication check
-                const authHeader = headers.get('Authorization');
-                if (!authHeader || !authHeader.startsWith('Bearer ')) {
-                    return unauthorized();
-                }
+                // Get the highest employee ID number
+                const highestId = employees.reduce((max, employee) => {
+                    const currentId = parseInt(employee.employeeId.replace('EMP', ''));
+                    return currentId > max ? currentId : max;
+                }, 0);
 
-                const employee = body;
-
-                if (!employee.firstName || !employee.lastName || !employee.email || !employee.departmentId) {
-                    return error('Required fields are missing');
-                }
-
-                if (employees.some(e => e.email.toLowerCase() === employee.email.toLowerCase())) {
-                    return error('Email already exists');
-                }
-
-                const department = departments.find(d => d.id === employee.departmentId);
-                if (!department) return error('Department not found');
-
-                const newId = getNextEmployeeId();
+                // Generate new IDs
+                const newId = highestId + 1;
                 const employeeId = `EMP${String(newId).padStart(3, '0')}`;
 
-                const newEmployee = {
-                    id: newId,
-                    employeeId: employeeId,
-                    firstName: employee.firstName,
-                    lastName: employee.lastName,
-                    email: employee.email,
-                    phone: employee.phone || '',
-                    position: employee.position || '',
-                    departmentId: employee.departmentId,
-                    department: department.name,
-                    manager: employee.manager || '',
-                    hireDate: new Date(),
-                    salary: employee.salary || 0,
-                    status: 'Active',
-                    created: new Date(),
-                    updated: new Date(),
-                    transferHistory: []
-                };
+                // Validate department exists
+                const department = departments.find(d => d.id === employee.departmentId);
+                if (!department) {
+                    return error('Invalid department');
+                }
 
-                employees.push(newEmployee);
+                // Set default values
+                employee.id = newId;
+                employee.employeeId = employeeId;
+                employee.status = 'Active';
+                employee.created = new Date();
+                employee.updated = new Date();
+
+                // Add new employee to array
+                employees.push(employee);
+                
+                // Save updated employees array to local storage
                 localStorage.setItem(employeesKey, JSON.stringify(employees));
-
-                // Return success response without modifying the session
-                return ok({
-                    ...newEmployee,
-                    jwtToken: 'admin-token-permanent'
-                });
-            } catch (e) {
-                console.error('Error in createEmployee:', e);
-                return error('Failed to create employee. Please try again.');
+                
+                return ok(employee);
+            } catch (err: any) {
+                return error('Error creating employee: ' + (err.message || 'Unknown error'));
             }
         }
 
         function updateEmployee() {
-            if (!isLoggedIn()) return unauthorized();
+            // Check if user is logged in and has appropriate role
+            const user = getUserFromToken();
+            if (!user) return unauthorized();
+            
+            // Allow Admin and HR roles to update employees
+            if (user.role !== 'Admin' && user.role !== 'HR') {
+                return error('You do not have permission to update employees');
+            }
 
             const params = body;
             const employee = employees.find(x => x.id === idFromUrl());
@@ -419,22 +528,12 @@ export class FakeBackendInterceptor implements HttpInterceptor {
                 }
             }
 
-            // Handle department transfer
+            // If department is being changed, validate it exists
             if (params.departmentId && params.departmentId !== employee.departmentId) {
-                const newDepartment = departments.find(d => d.id === params.departmentId);
-                if (!newDepartment) {
-                    return error('Department not found');
+                const department = departments.find(d => d.id === params.departmentId);
+                if (!department) {
+                    return error('Invalid department');
                 }
-
-                // Add transfer record
-                employee.transferHistory.push({
-                    fromDepartment: employee.department,
-                    toDepartment: newDepartment.name,
-                    date: new Date(),
-                    reason: params.transferReason || 'Department transfer'
-                });
-
-                params.department = newDepartment.name;
             }
 
             // Update employee
@@ -448,16 +547,22 @@ export class FakeBackendInterceptor implements HttpInterceptor {
         }
 
         function deleteEmployee() {
-            if (!isLoggedIn()) return unauthorized();
+            // Check if user is logged in and has appropriate role
+            const user = getUserFromToken();
+            if (!user) return unauthorized();
+            
+            // Only Admin can delete employees
+            if (user.role !== 'Admin') {
+                return error('You do not have permission to delete employees');
+            }
 
             const employee = employees.find(x => x.id === idFromUrl());
             if (!employee) {
                 return error('Employee not found');
             }
 
-            // Soft delete - update status instead of removing
-            employee.status = 'Inactive';
-            employee.updated = new Date();
+            // Remove employee from array
+            employees = employees.filter(x => x.id !== idFromUrl());
             
             // Save updated employees array to local storage
             localStorage.setItem(employeesKey, JSON.stringify(employees));
@@ -668,6 +773,56 @@ export class FakeBackendInterceptor implements HttpInterceptor {
             return ok();
         }
 
+        // Add new route for employee transfer
+        function transferEmployee() {
+            // Check if user is logged in and has appropriate role
+            const user = getUserFromToken();
+            if (!user) return unauthorized();
+            
+            // Allow Admin and HR roles to transfer employees
+            if (user.role !== 'Admin' && user.role !== 'HR') {
+                return error('You do not have permission to transfer employees');
+            }
+
+            const employeeId = idFromUrl();
+            const { newDepartmentId, transferDate, reason } = body;
+
+            const employee = employees.find(x => x.id === employeeId);
+            if (!employee) {
+                return error('Employee not found');
+            }
+
+            // Validate new department exists
+            const department = departments.find(d => d.id === newDepartmentId);
+            if (!department) {
+                return error('Invalid department');
+            }
+
+            // Create transfer record
+            const transfer = {
+                id: Date.now(),
+                employeeId: employee.id,
+                oldDepartmentId: employee.departmentId,
+                newDepartmentId: newDepartmentId,
+                transferDate: transferDate || new Date(),
+                reason: reason || 'Department transfer',
+                status: 'Completed',
+                created: new Date()
+            };
+
+            // Update employee's department
+            employee.departmentId = newDepartmentId;
+            employee.updated = new Date();
+
+            // Save updated employees array to local storage
+            localStorage.setItem(employeesKey, JSON.stringify(employees));
+
+            return ok({
+                employee,
+                transfer
+            });
+        }
+
         // helper functions
 
         function ok(body?: any) {
@@ -700,17 +855,17 @@ export class FakeBackendInterceptor implements HttpInterceptor {
         }
 
         function isLoggedIn() {
-            try {
-                const authHeader = headers.get('Authorization');
-                if (!authHeader || !authHeader.startsWith('Bearer ')) {
-                    return false;
-                }
-                
-                const token = authHeader.split(' ')[1];
-                return token === 'admin-token-permanent';
-            } catch (e) {
-                return false;
-            }
+            const authHeader = headers.get('Authorization');
+            if (!authHeader) return false;
+            
+            const token = authHeader.split(' ')[1];
+            if (!token) return false;
+
+            // Special handling for admin token - always valid
+            if (token === 'admin-token-permanent') return true;
+
+            // For regular users, validate token
+            return users.some(x => x.role !== 'Admin' && `fake-jwt-token-${x.id}` === token);
         }
 
         function idFromUrl() {
@@ -719,34 +874,29 @@ export class FakeBackendInterceptor implements HttpInterceptor {
         }
 
         function getUserFromToken() {
-            try {
-                const authHeader = headers.get('Authorization');
-                if (!authHeader || !authHeader.startsWith('Bearer ')) {
-                    return null;
-                }
-                
-                const token = authHeader.split(' ')[1];
-                if (token === 'admin-token-permanent') {
-                    return {
-                        id: 1,
-                        email: 'admin@admin.com',
-                        title: 'Mr',
-                        firstName: 'Admin',
-                        lastName: 'User',
-                        role: 'Admin',
-                        isVerified: true,
-                        isActive: true,
-                        jwtToken: 'admin-token-permanent'
-                    };
-                }
-                return null;
-            } catch (e) {
-                return null;
-            }
-        }
+            const authHeader = headers.get('Authorization');
+            if (!authHeader) return null;
+            
+            const token = authHeader.split(' ')[1];
+            if (!token) return null;
 
-        // Initialize employees on startup
-        loadEmployees();
+            // For admin, return admin user directly
+            if (token === 'admin-token-permanent') {
+                return {
+                    id: 1,
+                    email: 'admin@admin.com',
+                    title: 'Mr',
+                    firstName: 'Admin',
+                    lastName: 'User',
+                    role: 'Admin',
+                    isVerified: true,
+                    isActive: true
+                };
+            }
+
+            // For regular users, find by token
+            return users.find(x => `fake-jwt-token-${x.id}` === token);
+        }
     }
 }
 
